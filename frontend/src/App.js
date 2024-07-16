@@ -1,22 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard';
 
-const App = () => {
-    const [greeting, setGreeting] = useState('');
-
-    useEffect(() => {
-        axios.get('http://localhost:4000/api/greeting')
-            .then(response => {
-                setGreeting(response.data);
-            });
-    }, []);
-
-    return (
-        <div>
-            <h1>{greeting}</h1>
-        </div>
-    );
-};
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </Router>
+  );
+}
 
 export default App;
-

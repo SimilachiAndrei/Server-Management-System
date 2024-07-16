@@ -1,0 +1,8 @@
+@import './general.css';
+
+.footer {
+    width: 100%;
+    min-height: 1rem;
+    display: flex;
+    justify-content: center;
+}
