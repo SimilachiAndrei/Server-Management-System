@@ -1,4 +1,4 @@
-package cockpit.motherNode;
+package cockpit.motherNode.Config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
