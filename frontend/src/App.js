@@ -1,17 +1,22 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 
 function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
-    </Router>
-  );
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    return (
+        <Router>
+            <Routes>
+                <Route path="/" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+                <Route 
+                    path="/dashboard" 
+                    element={isAuthenticated ? <Dashboard /> : <Navigate to="/" />}
+                />
+            </Routes>
+        </Router>
+    );
 }
 
 export default App;

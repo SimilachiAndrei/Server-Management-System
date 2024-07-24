@@ -1,8 +1,14 @@
 @import './general.css';
 
 .header {
+    background-color: var(--var4);
     width: 100%;
     min-height: 5rem;
     display: flex;
     justify-content: center;
+    color:white;
+}
+
+.title{
+    align-self: center;
 }

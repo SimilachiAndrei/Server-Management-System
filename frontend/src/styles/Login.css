@@ -10,10 +10,29 @@
     max-height: 100%;
 }
 
+.content {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+
 .formContainer {
     border: solid;
     border-radius: 0.4em;
     padding: 3rem;
-
     box-shadow: 1rem 1rem 0.6rem lightgray;
+}
+
+button {
+    border-radius: 1em;
+    background-color: white;
+    border: none;
+}
+
+button:hover{
+    background-color: var(--var3);
+    transition: 1s;
 }
