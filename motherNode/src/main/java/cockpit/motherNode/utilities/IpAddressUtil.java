@@ -1,4 +1,4 @@
-package cockpit.motherNode.Utility;
+package cockpit.motherNode.utilities;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 

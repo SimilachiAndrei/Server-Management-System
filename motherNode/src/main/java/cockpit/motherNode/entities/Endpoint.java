@@ -1,4 +1,4 @@
-package cockpit.motherNode.Model;
+package cockpit.motherNode.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
