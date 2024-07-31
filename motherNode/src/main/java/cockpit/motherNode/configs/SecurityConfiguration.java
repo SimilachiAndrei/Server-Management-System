@@ -28,25 +28,17 @@ public class SecurityConfiguration {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
-    //TODO -- make it not deprecated
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf()
-                .disable()
-                .authorizeHttpRequests()
-                .requestMatchers("/auth/**")
-                .permitAll()
-                .anyRequest()
-                .authenticated()
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+        return http.csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/auth/**").permitAll())
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/**").authenticated())
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
+
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
