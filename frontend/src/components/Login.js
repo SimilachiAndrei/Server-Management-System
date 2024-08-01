@@ -4,32 +4,29 @@ import '../styles/Login.css';
 
 function Login({ setIsAuthenticated }) {
     const navigate = useNavigate();
-    const [username, setUsername] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
-            const response = await fetch('http://localhost:4000/auth/login',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                }
-            );
+            const response = await fetch('http://localhost:4000/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier, password })
+            });
+
             if (response.ok) {
-                const {token,expiresIn} = await response.JSON();
-                localStorage.setItem('token',token);
-                localStorage.setItem('token',expiresIn);
+                const { token, expiresIn } = await response.json(); 
+                localStorage.setItem('token', token);
+                localStorage.setItem('expiresIn', expiresIn);
                 setIsAuthenticated(true);
                 navigate('/dashboard');
-            }
-            else {
+            } else {
                 const errorData = await response.json();
                 console.log(errorData.message);
             }
-        }
-        catch (err) {
+        } catch (err) {
             console.log(err);
         }
     };
@@ -48,8 +45,8 @@ function Login({ setIsAuthenticated }) {
                             <input
                                 type='text'
                                 name='username'
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                value={identifier}
+                                onChange={(e) => setIdentifier(e.target.value)}
                                 required></input>
                         </div>
                         <div className='form-group'>
