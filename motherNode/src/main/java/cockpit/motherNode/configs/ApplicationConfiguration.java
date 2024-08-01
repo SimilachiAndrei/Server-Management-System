@@ -1,6 +1,7 @@
 package cockpit.motherNode.configs;
 
 import cockpit.motherNode.repositories.UserRepository;
+import cockpit.motherNode.services.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,11 +20,9 @@ public class ApplicationConfiguration {
         this.userRepository = userRepository;
     }
 
-    //TODO : make a separate file for this so that you can add more
     @Bean
     UserDetailsService userDetailsService() {
-        return username -> userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return new CustomUserDetailsService();
     }
 
     @Bean

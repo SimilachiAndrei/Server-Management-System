@@ -43,7 +43,7 @@ public class AuthenticationService {
         // Authenticate the user and get the Authentication object
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        input.getEmail(),
+                        input.getIdentifier(),
                         input.getPassword()
                 )
         );
