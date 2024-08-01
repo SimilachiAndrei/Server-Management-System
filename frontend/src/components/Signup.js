@@ -1,36 +1,33 @@
-import { React, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 
-function Login({ setIsAuthenticated }) {
+function Signup() {
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState(null);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
-            const response = await fetch('http://localhost:4000/auth/login',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                }
-            );
+            const response = await fetch('http://localhost:4000/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, email, password }),
+            });
+
             if (response.ok) {
-                const {token,expiresIn} = await response.JSON();
-                localStorage.setItem('token',token);
-                localStorage.setItem('token',expiresIn);
-                setIsAuthenticated(true);
-                navigate('/dashboard');
-            }
-            else {
+                navigate('/');
+            } else {
                 const errorData = await response.json();
-                console.log(errorData.message);
+                setError(errorData.message);
             }
-        }
-        catch (err) {
-            console.log(err);
+        } catch (err) {
+            setError('An error occurred. Please try again.');
         }
     };
 
@@ -41,7 +38,8 @@ function Login({ setIsAuthenticated }) {
             </div>
             <div className='content'>
                 <div className='formContainer'>
-                    <h2>Login</h2>
+                    <h2>Signup</h2>
+                    {error && <div className='error'>{error}</div>}
                     <form onSubmit={handleSubmit}>
                         <div className='form-group'>
                             <label>Username</label>
@@ -50,7 +48,18 @@ function Login({ setIsAuthenticated }) {
                                 name='username'
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                required></input>
+                                required
+                            />
+                        </div>
+                        <div className='form-group'>
+                            <label>Email</label>
+                            <input
+                                type='email'
+                                name='email'
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
                         </div>
                         <div className='form-group'>
                             <label>Password</label>
@@ -59,9 +68,10 @@ function Login({ setIsAuthenticated }) {
                                 name='password'
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                required></input>
+                                required
+                            />
                         </div>
-                        <button type='submit'>Login</button>
+                        <button type='submit'>Signup</button>
                     </form>
                 </div>
             </div>
@@ -74,4 +84,4 @@ function Login({ setIsAuthenticated }) {
     );
 }
 
-export default Login;
+export default Signup;
