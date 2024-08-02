@@ -1,8 +1,8 @@
-import { React, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 
-function Login({ setIsAuthenticated }) {
+function Login() {
     const navigate = useNavigate();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
@@ -18,9 +18,9 @@ function Login({ setIsAuthenticated }) {
 
             if (response.ok) {
                 const { token, expiresIn } = await response.json(); 
+                const expirationTime = Date.now() + expiresIn;
                 localStorage.setItem('token', token);
-                localStorage.setItem('expiresIn', expiresIn);
-                setIsAuthenticated(true);
+                localStorage.setItem('expiresIn', expirationTime);
                 navigate('/dashboard');
             } else {
                 const errorData = await response.json();
