@@ -10,6 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EndpointResponse {
+    private Integer id;
     private String name;
     private String description;
     private String address;
