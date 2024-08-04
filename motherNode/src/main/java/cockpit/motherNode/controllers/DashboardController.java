@@ -8,8 +8,11 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static cockpit.motherNode.utilities.IpAddressUtil.inetAddressToString;
 
 @AllArgsConstructor
 
@@ -26,7 +29,7 @@ public class DashboardController {
             EndpointResponse endpointResponse = new EndpointResponse();
             endpointResponse.setDescription(endpoint.getDescription());
             endpointResponse.setName(endpoint.getName());
-            endpointResponse.setAddress(endpoint.getIpV4());
+            endpointResponse.setAddress(inetAddressToString(endpoint.getIpV4()));
             endpointResponses.add(endpointResponse);
         });
 
@@ -34,10 +37,10 @@ public class DashboardController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<EndpointResponse> add(@RequestBody EndpointDto endpointDto) {
+    public ResponseEntity<EndpointResponse> add(@RequestBody EndpointDto endpointDto) throws UnknownHostException {
         Endpoint endpoint = dashboardService.add(endpointDto);
         EndpointResponse endpointResponse = new EndpointResponse();
-        endpointResponse.setAddress(endpoint.getIpV4());
+        endpointResponse.setAddress(inetAddressToString(endpoint.getIpV4()));
         endpointResponse.setName(endpoint.getName());
         endpointResponse.setDescription(endpoint.getDescription());
         return ResponseEntity.ok(endpointResponse);
