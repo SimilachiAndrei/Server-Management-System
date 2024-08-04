@@ -23,6 +23,9 @@ function Login() {
                 const expirationTime = Date.now() + expiresIn;
                 localStorage.setItem('token', token);
                 localStorage.setItem('expiresIn', expirationTime);
+                
+                // Wait for the state to be updated before navigating
+                await new Promise(resolve => setTimeout(resolve, 0));
                 navigate('/dashboard');
             } else {
                 const errorData = await response.json();
@@ -32,6 +35,7 @@ function Login() {
             console.log(err);
         }
     };
+
 
     return (
         <div className={pageStyle.page}>
