@@ -19,3 +19,14 @@ code {
   --var4: #0877A1;
   --var5: #2D4150;
 }
+
+button {
+  border-radius: 1em;
+  background-color: white;
+  border: none;
+}
+
+button:hover{
+  background-color: var(--var3);
+  transition: 1s;
+}
