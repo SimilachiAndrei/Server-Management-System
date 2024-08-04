@@ -1,6 +1,5 @@
 package cockpit.motherNode.dtos;
 
-import lombok.Generated;
 import lombok.Getter;
 import lombok.Setter;
 
