@@ -12,7 +12,7 @@ const isTokenValid = () => {
         const currentTime = Date.now();
         return currentTime < parseInt(expiresIn, 10);
     }
-
+    localStorage.clear();
     return false;
 };
 

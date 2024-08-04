@@ -1,6 +1,3 @@
-@import './header.css';
-@import './footer.css';
-
 .page {
     display: flex;
     flex-direction: column;

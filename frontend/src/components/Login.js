@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Login.css';
+import pageStyle from '../styles/Login.module.css';
+import headerStyle from '../styles/header.module.css';
+import footerStyle from '../styles/footer.module.css';
 
 function Login() {
     const navigate = useNavigate();
@@ -32,12 +34,12 @@ function Login() {
     };
 
     return (
-        <div className='page'>
-            <div className='header'>
-                <div className='title'>Cockpit</div>
+        <div className={pageStyle.page}>
+            <div className={headerStyle.header}>
+                <div className={headerStyle.title}>Cockpit</div>
             </div>
-            <div className='content'>
-                <div className='formContainer'>
+            <div className={pageStyle.content}>
+                <div className={pageStyle.formContainer}>
                     <h2>Login</h2>
                     <form onSubmit={handleSubmit}>
                         <div className='form-group'>
@@ -62,7 +64,7 @@ function Login() {
                     </form>
                 </div>
             </div>
-            <div className='footer'>
+            <div className={footerStyle.footer}>
                 <div className='footer-content'>
                     All rights reserved to Similachi Andrei!
                 </div>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Login.css';
+import pageStyle from '../styles/Login.module.css';
+import headerStyle from '../styles/header.module.css';
+import footerStyle from '../styles/footer.module.css';
 
 function Signup() {
     const navigate = useNavigate();
@@ -32,12 +34,12 @@ function Signup() {
     };
 
     return (
-        <div className='page'>
-            <div className='header'>
-                <div className='title'>Cockpit</div>
+        <div className={pageStyle.page}>
+            <div className={headerStyle.header}>
+                <div className={headerStyle.title}>Cockpit</div>
             </div>
-            <div className='content'>
-                <div className='formContainer'>
+            <div className={pageStyle.content}>
+                <div className={pageStyle.formContainer}>
                     <h2>Signup</h2>
                     {error && <div className='error'>{error}</div>}
                     <form onSubmit={handleSubmit}>
@@ -75,7 +77,7 @@ function Signup() {
                     </form>
                 </div>
             </div>
-            <div className='footer'>
+            <div className={footerStyle.footer}>
                 <div className='footer-content'>
                     All rights reserved to Similachi Andrei!
                 </div>
