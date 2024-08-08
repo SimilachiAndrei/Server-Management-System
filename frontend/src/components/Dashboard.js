@@ -7,6 +7,7 @@ function Dashboard() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
+  const [port, setPort] = useState('');
   const [computers, setComputers] = useState([]);
 
   // Fetch computers from the database
@@ -40,7 +41,7 @@ function Dashboard() {
           "Authorization": `Bearer ${localStorage.getItem('token')}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ name, description, address })
+        body: JSON.stringify({ name, description, address, port })
       });
       if (response.ok) {
         fetchComputers();
@@ -62,6 +63,12 @@ function Dashboard() {
         body: JSON.stringify(computer)
       });
       const data = await response.json();
+      if (response.ok) {
+
+      }
+      else {
+
+      }
       console.log(data);
     } catch (error) {
       console.log(error);
@@ -98,6 +105,16 @@ function Dashboard() {
                 required
               ></input>
             </div>
+            <div className={pageStyle['form-group']}>
+              <label>Port number</label>
+              <input
+                type='number'
+                name='port'
+                value={port}
+                onChange={(e) => setPort(e.target.value)}
+                required
+              ></input>
+            </div>
             <button type='submit'>Add</button>
           </form>
         </div>
@@ -107,6 +124,7 @@ function Dashboard() {
               <div className={pageStyle['computer-container-name']}>{computer.name}</div>
               <div className={pageStyle['computer-container-description']}>{computer.description}</div>
               <div className={pageStyle['computer-container-IpAddress']}>{computer.address}</div>
+              <div className={pageStyle['computer-container-Port']}>{computer.port}</div>
               <button onClick={() => handleConnect(computer)}>Connect</button>
             </div>
           ))}

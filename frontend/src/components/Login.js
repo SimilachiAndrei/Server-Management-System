@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import pageStyle from '../styles/Login.module.css';
 import headerStyle from '../styles/header.module.css';
 import footerStyle from '../styles/footer.module.css';
 
 function Login() {
-    const navigate = useNavigate();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
 
@@ -26,7 +24,7 @@ function Login() {
                 
                 // Wait for the state to be updated before navigating
                 await new Promise(resolve => setTimeout(resolve, 0));
-                navigate('/dashboard');
+                window.location.href = '/dashboard';
             } else {
                 const errorData = await response.json();
                 console.log(errorData.message);

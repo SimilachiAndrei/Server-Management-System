@@ -48,6 +48,7 @@
 
 .computer-container-name,
 .computer-container-description,
-.computer-container-ipAddress {
+.computer-container-ipAddress
+.computer-container-port {
     margin-bottom: 0.5rem;
 }
