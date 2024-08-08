@@ -14,4 +14,5 @@ public class EndpointResponse {
     private String name;
     private String description;
     private String address;
+    private Integer port;
 }

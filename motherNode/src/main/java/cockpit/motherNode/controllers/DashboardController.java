@@ -37,6 +37,7 @@ public class DashboardController {
             endpointResponse.setName(endpoint.getName());
             endpointResponse.setAddress(inetAddressToString(endpoint.getIpV4()));
             endpointResponse.setId(endpoint.getId());
+            endpointResponse.setPort(endpoint.getPort());
             endpointResponses.add(endpointResponse);
         });
 
@@ -50,6 +51,7 @@ public class DashboardController {
         endpointResponse.setAddress(inetAddressToString(endpoint.getIpV4()));
         endpointResponse.setName(endpoint.getName());
         endpointResponse.setDescription(endpoint.getDescription());
+        endpointResponse.setPort(endpoint.getPort());
         return ResponseEntity.ok(endpointResponse);
     }
 }

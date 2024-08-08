@@ -29,6 +29,7 @@ public class DashboardService {
         endpoint.setDescription(input.getDescription());
         endpoint.setName(input.getName());
         endpoint.setIpV4(stringToInetAddress(input.getAddress()));
+        endpoint.setPort(input.getPort());
         return endpointRepository.save(endpoint);
     }
 }

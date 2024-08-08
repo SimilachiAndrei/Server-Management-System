@@ -14,5 +14,6 @@ public class EndpointDto {
     private String name;
     private String description;
     private String address;
+    private Integer port;
 }
 
