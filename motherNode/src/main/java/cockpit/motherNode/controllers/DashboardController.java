@@ -21,12 +21,6 @@ import static cockpit.motherNode.utilities.IpAddressUtil.inetAddressToString;
 public class DashboardController {
     private DashboardService dashboardService;
 
-    @PostMapping("/connect")
-    public ResponseEntity<String> connect(@RequestBody String address)
-    {
-        return ResponseEntity.ok("mock response");
-    }
-
     @GetMapping("/getAll")
     public ResponseEntity<List<EndpointResponse>> getAll() {
         List<EndpointResponse> endpointResponses = new ArrayList<>();
