@@ -1,8 +1,10 @@
 package cockpit.motherNode.controllers;
 
+import cockpit.motherNode.dtos.ConnectDto;
 import cockpit.motherNode.dtos.EndpointDto;
 import cockpit.motherNode.entities.Endpoint;
 import cockpit.motherNode.responses.EndpointResponse;
+import cockpit.motherNode.services.ConnectionService;
 import cockpit.motherNode.services.DashboardService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,18 @@ import static cockpit.motherNode.utilities.IpAddressUtil.inetAddressToString;
 @RestController
 public class DashboardController {
     private DashboardService dashboardService;
+    private ConnectionService connectionService;
+
+    @PostMapping("/connect")
+    public ResponseEntity<String> connect(@RequestBody ConnectDto connectDto) {
+        boolean success = connectionService.initiateConnection(connectDto.getAddress(), connectDto.getPort());
+
+        if (success) {
+            return ResponseEntity.ok("Connection established successfully.");
+        } else {
+            return ResponseEntity.status(500).body("Failed to establish connection.");
+        }
+    }
 
     @GetMapping("/getAll")
     public ResponseEntity<List<EndpointResponse>> getAll() {

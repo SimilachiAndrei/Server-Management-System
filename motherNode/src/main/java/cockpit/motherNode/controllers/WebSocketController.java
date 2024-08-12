@@ -1,32 +1,25 @@
 package cockpit.motherNode.controllers;
 
-
-import cockpit.motherNode.dtos.ConnectDto;
-import cockpit.motherNode.services.AppService;
-import lombok.AllArgsConstructor;
+import cockpit.motherNode.services.CommandService;
+import cockpit.motherNode.services.ConnectionService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.stereotype.Controller;
 
-@AllArgsConstructor
-
-@RestController
-@RequestMapping("/api/endpoint")
+@Controller
 public class WebSocketController {
 
-    private AppService appService;
+    private final CommandService commandService;
 
-    @MessageMapping("/connect")
-    public void connectToApp(@Payload ConnectDto request) {
-        String ipAddress = request.getAddress();
-        int port = request.getPort();
-
-        appService.connectToApp(ipAddress, port);
+    public WebSocketController(ConnectionService connectionService) {
+        this.commandService = connectionService.getCommandService();
     }
 
-    @MessageMapping("/disconnect")
-    public void disconnectFromApp() {
-        appService.disconnectFromApp();
+    @MessageMapping("/sendCommand")
+    @SendTo("/topic/commandResponse")
+    public String processCommand(String command) {
+        return commandService.sendCommand(command); // Forward the command to the CommandThread and return the response
     }
 }
+
+
