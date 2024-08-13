@@ -10,7 +10,6 @@ import java.net.Socket;
 @Setter
 @Getter
 
-@Service
 public class CommandService {
     private String address;
     private Integer port;

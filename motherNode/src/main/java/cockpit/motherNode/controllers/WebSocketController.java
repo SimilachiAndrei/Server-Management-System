@@ -9,16 +9,17 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class WebSocketController {
 
-    private final CommandService commandService;
+    private final ConnectionService connectionService;
 
     public WebSocketController(ConnectionService connectionService) {
-        this.commandService = connectionService.getCommandService();
+        this.connectionService = connectionService;
     }
+
 
     @MessageMapping("/sendCommand")
     @SendTo("/topic/commandResponse")
     public String processCommand(String command) {
-        return commandService.sendCommand(command); // Forward the command to the CommandThread and return the response
+        return connectionService.getCommandService().sendCommand(command);
     }
 }
 
