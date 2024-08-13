@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static cockpit.motherNode.utilities.IpAddressUtil.inetAddressToString;
 
@@ -25,13 +27,16 @@ public class DashboardController {
     private ConnectionService connectionService;
 
     @PostMapping("/connect")
-    public ResponseEntity<String> connect(@RequestBody ConnectDto connectDto) {
+    public ResponseEntity<Map<String, String>> connect(@RequestBody ConnectDto connectDto) {
         boolean success = connectionService.initiateConnection(connectDto.getAddress(), connectDto.getPort());
 
+        Map<String, String> response = new HashMap<>();
         if (success) {
-            return ResponseEntity.ok("Connection established successfully.");
+            response.put("message", "Connection established successfully.");
+            return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.status(500).body("Failed to establish connection.");
+            response.put("message", "Failed to establish connection.");
+            return ResponseEntity.status(500).body(response);
         }
     }
 

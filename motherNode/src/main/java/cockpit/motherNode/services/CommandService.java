@@ -22,7 +22,8 @@ public class CommandService {
     }
 
     public void connect() {
-        try (Socket socket = new Socket(address, port)) {
+        try {
+            socket = new Socket(address, port);
             success = true;
         } catch (IOException exception) {
             success = false;

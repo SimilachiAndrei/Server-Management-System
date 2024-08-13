@@ -32,11 +32,12 @@ public class CpuUsageThread implements Runnable {
         try {
             socket = new Socket(address, port);
             success = true;
-
+            System.out.println("After connection : " + success);
             // Continuously receive CPU usage data and forward to the frontend
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String cpuData;
             while ((cpuData = reader.readLine()) != null) {
+                System.out.println(cpuData);
                 messagingTemplate.convertAndSend("/topic/cpuUsage", cpuData);
             }
         } catch (IOException e) {

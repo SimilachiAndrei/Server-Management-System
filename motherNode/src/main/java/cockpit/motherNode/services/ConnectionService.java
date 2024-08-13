@@ -28,7 +28,12 @@ public class ConnectionService {
         cpuUsageThread = new CpuUsageThread(ipAddress, port, messagingTemplate);
 
         executorService.submit(cpuUsageThread);
-
+        System.out.println(commandService.isSuccess() + " " + cpuUsageThread.isSuccess());
+        try {
+            Thread.sleep(1);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         return commandService.isSuccess() && cpuUsageThread.isSuccess();
     }
 
