@@ -1,8 +1,10 @@
 package cockpit.childNode;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
 
 public class CpuUsageThread implements Runnable {
     private Socket socket;
@@ -13,8 +15,41 @@ public class CpuUsageThread implements Runnable {
 
     @Override
     public void run() {
-        try (InputStream input = socket.getInputStream()) {
-            // Handle CPU usage data communication here
+        OperatingSystemMXBean osMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+
+        try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+            while (!socket.isClosed()) {
+                // Get CPU load
+                double cpuLoad = osMXBean.getSystemCpuLoad();
+
+                // Get RAM usage
+                long totalMemory = osMXBean.getTotalPhysicalMemorySize();
+                long freeMemory = osMXBean.getFreePhysicalMemorySize();
+                long usedMemory = totalMemory - freeMemory;
+
+                // Get RAM usage percentage
+                double ramUsage = (double) usedMemory / totalMemory * 100;
+
+                // Format the data to be sent over the socket
+                String data = String.format(
+                        "CPU Load: %.2f%%, RAM Usage: %.2f%%, Total RAM: %s, Used RAM: %s, Free RAM: %s",
+                        cpuLoad * 100,
+                        ramUsage,
+                        formatMemorySize(totalMemory),
+                        formatMemorySize(usedMemory),
+                        formatMemorySize(freeMemory)
+                );
+
+                out.println(data);
+
+                System.out.println(data);
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         } catch (IOException e) {
             System.out.println("Error handling CPU usage: " + e.getMessage());
         } finally {
@@ -23,6 +58,19 @@ public class CpuUsageThread implements Runnable {
             } catch (IOException e) {
                 System.out.println("Error closing socket: " + e.getMessage());
             }
+        }
+    }
+
+    // Helper method to format memory size in a readable format
+    private static String formatMemorySize(long size) {
+        if (size < 1024) {
+            return size + " B";
+        } else if (size < 1024 * 1024) {
+            return String.format("%.2f", (double) size / 1024) + " KB";
+        } else if (size < 1024 * 1024 * 1024) {
+            return String.format("%.2f", (double) size / (1024 * 1024)) + " MB";
+        } else {
+            return String.format("%.2f", (double) size / (1024 * 1024 * 1024)) + " GB";
         }
     }
 }

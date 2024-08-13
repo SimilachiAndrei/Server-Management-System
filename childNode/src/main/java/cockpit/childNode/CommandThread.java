@@ -16,7 +16,6 @@ public class CommandThread implements Runnable {
     public void run() {
         try (InputStream input = socket.getInputStream();
              OutputStream output = socket.getOutputStream()) {
-            // Handle command communication here
         } catch (IOException e) {
             System.out.println("Error handling command: " + e.getMessage());
         } finally {
