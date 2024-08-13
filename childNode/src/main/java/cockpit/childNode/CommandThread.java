@@ -14,7 +14,8 @@ public class CommandThread implements Runnable {
     public void run() {
         try (BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              PrintWriter output = new PrintWriter(socket.getOutputStream(),true)) {
-            while (!socket.isClosed()) {
+            while (!socket.getKeepAlive()) {
+                System.out.println("Cpu Thread : Waiting for a message !");
                 String command = input.readLine().trim();
                 System.out.println(command + "\n");
                 try {
@@ -45,7 +46,7 @@ public class CommandThread implements Runnable {
         String line;
         StringBuilder stringBuilder = new StringBuilder();
         while ((line = processOutput.readLine()) != null) {
-            stringBuilder.append(line).append("\n");
+            stringBuilder.append(line);
         }
         int exitCode = process.waitFor();
         stringBuilder.append("Process has finished with exit code: ").append(exitCode);

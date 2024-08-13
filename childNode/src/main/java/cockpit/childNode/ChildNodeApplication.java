@@ -25,11 +25,12 @@ public class ChildNodeApplication {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             while (running) {
                 // Accept and handle connections based on type
+                System.out.println("Waiting for a connection !");
                 Socket socket = serverSocket.accept();
                 String incomingAddress = socket.getInetAddress().getHostAddress();
                 int incomingPort = socket.getPort();
 
-                if (!validateConnection(incomingAddress, incomingPort)) {
+                if (!validateConnection(incomingAddress)) {
                     System.out.println("Unauthorized connection attempt from " + incomingAddress + ":" + incomingPort);
                     socket.close();
                     continue;
@@ -55,8 +56,8 @@ public class ChildNodeApplication {
         }
     }
 
-    private boolean validateConnection(String incomingAddress, int incomingPort) {
-        return motherAddress.equals(incomingAddress) && motherPort == incomingPort;
+    private boolean validateConnection(String incomingAddress) {
+        return motherAddress.equals(incomingAddress);
     }
 
     private void waitForThreadsToComplete() {

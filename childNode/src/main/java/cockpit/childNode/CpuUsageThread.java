@@ -18,7 +18,7 @@ public class CpuUsageThread implements Runnable {
         OperatingSystemMXBean osMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
         try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
-            while (!socket.isClosed()) {
+            while (!socket.getKeepAlive()) {
                 // Get CPU load
                 double cpuLoad = osMXBean.getSystemCpuLoad();
 
