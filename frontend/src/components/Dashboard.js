@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import headerStyle from '../styles/header.module.css';
 import footerStyle from '../styles/footer.module.css';
 import pageStyle from '../styles/Dashboard.module.css';
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
@@ -64,10 +66,9 @@ function Dashboard() {
       });
       const data = await response.json();
       if (response.ok) {
-
-      }
-      else {
-
+        navigate(`/cockpit?ip=${computer.address}&port=${computer.port}`);
+      } else {
+        console.log('Connection failed');
       }
       console.log(data);
     } catch (error) {

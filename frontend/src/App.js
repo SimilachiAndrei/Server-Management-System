@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Signup from './components/Signup';
+import Cockpit from './components/Cockpit';
+
 
 const isTokenValid = () => {
     const token = localStorage.getItem('token');
@@ -25,6 +27,10 @@ function App() {
                 <Route
                     path="/dashboard"
                     element={isTokenValid() ? <Dashboard /> : <Navigate to="/" />}
+                />
+                <Route
+                    path="/cockpit"
+                    element={isTokenValid() ? <Cockpit /> : <Navigate to="/" />}
                 />
             </Routes>
         </Router>
