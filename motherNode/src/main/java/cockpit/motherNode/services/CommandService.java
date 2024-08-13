@@ -37,11 +37,9 @@ public class CommandService {
 
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             StringBuilder response = new StringBuilder();
-            String line;
-            while (null != (line = in.readLine())) {
-                response.append(line).append("\n");
-            }
-            return response.toString();
+            String line = in.readLine();
+            System.out.println("Got to line : " + line);
+            return line;
         } catch (IOException exception) {
             return "Failed to send command: " + exception.getMessage();
         }
