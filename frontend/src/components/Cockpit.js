@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
@@ -6,7 +6,7 @@ const DashboardPage = () => {
     const [cpuData, setCpuData] = useState('');
     const [command, setCommand] = useState('');
     const [response, setResponse] = useState('');
-    const [client, setClient] = useState(null);
+    const clientRef = useRef(null);
 
     useEffect(() => {
         const socket = new SockJS('http://localhost:4000/ws');
@@ -23,36 +23,34 @@ const DashboardPage = () => {
 
         stompClient.onConnect = () => {
             console.log('Connected to WebSocket');
+
+            // Subscribe to both topics in a single onConnect callback
             stompClient.subscribe('/topic/commandResponse', (message) => {
                 setResponse(message.body);
             });
 
+            stompClient.subscribe('/topic/cpuUsage', (message) => {
+                setCpuData(message.body);
+            });
         };
-        
-        stompClient.onConnect = () => {
-          console.log('Connected to WebSocket');
-          stompClient.subscribe('/topic/cpuUsage', (message) => {
-              setCpuData(message.body);
-          });
-      };
 
         stompClient.onDisconnect = () => {
             console.log('Disconnected from WebSocket');
         };
 
         stompClient.activate();
-        setClient(stompClient);
+        clientRef.current = stompClient;
 
         return () => {
-            if (client && client.connected) {
-                client.deactivate();
+            if (clientRef.current && clientRef.current.connected) {
+                clientRef.current.deactivate();
             }
         };
     }, []);
 
     const handleCommandSubmit = () => {
-        if (client && client.connected) {
-            client.publish({ destination: '/app/sendCommand', body: command });
+        if (clientRef.current && clientRef.current.connected) {
+            clientRef.current.publish({ destination: '/app/sendCommand', body: command });
             setCommand('');
         }
     };
