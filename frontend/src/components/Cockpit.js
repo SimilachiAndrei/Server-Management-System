@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
+//TO DO : add jwt in case of multiple connections from different clients so i can use a map in the 
+//backend
+
 const DashboardPage = () => {
     const [cpuData, setCpuData] = useState('');
     const [command, setCommand] = useState('');
@@ -47,6 +50,25 @@ const DashboardPage = () => {
             }
         };
     }, []);
+
+    useEffect(() => {
+        const disconnectClient = () => {
+            if (clientRef.current && clientRef.current.connected) {
+                clientRef.current.publish({ destination: '/app/disconnect', body: '' });
+                clientRef.current.deactivate();
+            }
+        };
+    
+        // Handle the page unload or navigation away
+        window.addEventListener('beforeunload', disconnectClient);
+    
+        return () => {
+            window.removeEventListener('beforeunload', disconnectClient);
+            disconnectClient();
+        };
+    }, []);
+    
+
 
     const handleCommandSubmit = () => {
         if (clientRef.current && clientRef.current.connected) {
