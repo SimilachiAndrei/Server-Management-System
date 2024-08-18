@@ -1,5 +1,7 @@
 package cockpit.childNode;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -17,8 +19,10 @@ public class CpuUsageThread implements Runnable {
     public void run() {
         OperatingSystemMXBean osMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
-        try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
-            while (!socket.getKeepAlive()) {
+        try{
+            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+
+            while (socket.isConnected()) {
                 // Get CPU load
                 double cpuLoad = osMXBean.getSystemCpuLoad();
 
@@ -32,7 +36,7 @@ public class CpuUsageThread implements Runnable {
 
                 // Format the data to be sent over the socket
                 String data = String.format(
-                        "CPU Load: %.2f%%, RAM Usage: %.2f%%, Total RAM: %s, Used RAM: %s, Free RAM: %s",
+                        "CPU Load: %.2f%%,%nRAM Usage: %.2f%%,%nTotal RAM: %s,%nUsed RAM: %s,%nFree RAM: %s%n",
                         cpuLoad * 100,
                         ramUsage,
                         formatMemorySize(totalMemory),
@@ -40,7 +44,10 @@ public class CpuUsageThread implements Runnable {
                         formatMemorySize(freeMemory)
                 );
 
-                out.println(data);
+                byte[] response = data.getBytes();
+                outputStream.writeInt(response.length);
+                outputStream.write(response);
+                outputStream.flush();
 
                 System.out.println(data);
 

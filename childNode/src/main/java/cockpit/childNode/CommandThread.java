@@ -12,22 +12,6 @@ public class CommandThread implements Runnable {
 
     @Override
     public void run() {
-//        try (BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-//             PrintWriter output = new PrintWriter(socket.getOutputStream(),true)) {
-//            while (!socket.getKeepAlive()) {
-//                System.out.println("Cpu Thread : Waiting for a message !");
-//                String command = input.readLine().trim();
-//                System.out.println(command + "\n");
-//                try {
-//                    StringBuilder stringBuilder = getStringBuilder(command);
-//                    System.out.println(stringBuilder.toString());
-//                    output.println(stringBuilder.toString());
-//                } catch (IOException | InterruptedException exception) {
-//                    System.out.println(exception.getMessage());
-//                    output.println("An exception has occured: " + exception.getMessage());
-//                }
-//            }
-//        }
         try{
             DataInputStream inputStream = new DataInputStream(socket.getInputStream());
             DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
