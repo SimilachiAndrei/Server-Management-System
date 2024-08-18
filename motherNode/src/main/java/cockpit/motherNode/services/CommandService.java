@@ -2,11 +2,9 @@ package cockpit.motherNode.services;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Arrays;
 
 @Setter
 @Getter
@@ -33,14 +31,6 @@ public class CommandService {
 
     public String sendCommand(String command) {
         try {
-//            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-//            out.println(command);
-//
-//            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-//            StringBuilder response = new StringBuilder();
-//            String line = in.readLine();
-//            System.out.println("Got to line : " + line);
-//            return line;
             DataInputStream inputStream = new DataInputStream(socket.getInputStream());
             DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
             byte[] commandBytes = command.getBytes();

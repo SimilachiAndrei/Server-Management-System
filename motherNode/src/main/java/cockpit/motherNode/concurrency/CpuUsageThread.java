@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -34,11 +35,13 @@ public class CpuUsageThread implements Runnable {
             success = true;
             System.out.println("After connection : " + success);
             // Continuously receive CPU usage data and forward to the frontend
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String cpuData;
-            while ((cpuData = reader.readLine()) != null) {
-                System.out.println(cpuData);
-                messagingTemplate.convertAndSend("/topic/cpuUsage", cpuData);
+            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+            while (true) {
+                int messageLength = inputStream.readInt();
+                byte[] data = new byte[messageLength];
+                inputStream.read(data);
+                String response = new String(data);
+                messagingTemplate.convertAndSend("/topic/cpuUsage", response);
             }
         } catch (IOException e) {
             success = false;
