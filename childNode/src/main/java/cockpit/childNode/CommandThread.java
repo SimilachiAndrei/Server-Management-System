@@ -12,23 +12,52 @@ public class CommandThread implements Runnable {
 
     @Override
     public void run() {
-        try (BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             PrintWriter output = new PrintWriter(socket.getOutputStream(),true)) {
-            while (!socket.getKeepAlive()) {
-                System.out.println("Cpu Thread : Waiting for a message !");
-                String command = input.readLine().trim();
-                System.out.println(command + "\n");
-                try {
-                    StringBuilder stringBuilder = getStringBuilder(command);
-                    System.out.println(stringBuilder.toString());
-                    output.println(stringBuilder.toString());
-                } catch (IOException | InterruptedException exception) {
-                    System.out.println(exception.getMessage());
-                    output.println("An exception has occured: " + exception.getMessage());
+//        try (BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+//             PrintWriter output = new PrintWriter(socket.getOutputStream(),true)) {
+//            while (!socket.getKeepAlive()) {
+//                System.out.println("Cpu Thread : Waiting for a message !");
+//                String command = input.readLine().trim();
+//                System.out.println(command + "\n");
+//                try {
+//                    StringBuilder stringBuilder = getStringBuilder(command);
+//                    System.out.println(stringBuilder.toString());
+//                    output.println(stringBuilder.toString());
+//                } catch (IOException | InterruptedException exception) {
+//                    System.out.println(exception.getMessage());
+//                    output.println("An exception has occured: " + exception.getMessage());
+//                }
+//            }
+//        }
+        try{
+            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+            while (true) {
+                // Read the command length
+                int commandLength = inputStream.readInt();
+                if (commandLength <= 0) {
+                    break;  // End of stream or invalid length
                 }
+
+                // Read the command itself
+                byte[] commandBytes = new byte[commandLength];
+                inputStream.readFully(commandBytes);
+                String command = new String(commandBytes);
+
+                // Execute the command and capture output
+                StringBuilder stringBuilder = getStringBuilder(command);
+
+                // Send the output back to the client
+                byte[] outputBytes = stringBuilder.toString().getBytes();
+                outputStream.writeInt(outputBytes.length);
+                System.out.println(stringBuilder.toString());
+                outputStream.write(outputBytes);
             }
-        } catch (IOException e) {
+
+        }
+        catch (IOException e) {
             System.out.println("Error handling command: " + e.getMessage());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } finally {
             try {
                 socket.close();
@@ -46,7 +75,7 @@ public class CommandThread implements Runnable {
         String line;
         StringBuilder stringBuilder = new StringBuilder();
         while ((line = processOutput.readLine()) != null) {
-            stringBuilder.append(line);
+            stringBuilder.append(line).append("\n");
         }
         int exitCode = process.waitFor();
         stringBuilder.append("Process has finished with exit code: ").append(exitCode);
