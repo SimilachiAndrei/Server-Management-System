@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 
 @Setter
 @Getter
@@ -32,14 +33,27 @@ public class CommandService {
 
     public String sendCommand(String command) {
         try {
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            out.println(command);
+//            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+//            out.println(command);
+//
+//            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+//            StringBuilder response = new StringBuilder();
+//            String line = in.readLine();
+//            System.out.println("Got to line : " + line);
+//            return line;
+            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+            byte[] commandBytes = command.getBytes();
+            outputStream.writeInt(commandBytes.length);
+            outputStream.write(commandBytes);
+            outputStream.flush();
+            int commandSize = inputStream.readInt();
+            byte[] commandResponse = new byte[commandSize];
+            inputStream.read(commandResponse);
+            String response = new String(commandResponse);
+            System.out.println("Response : " + response);
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            StringBuilder response = new StringBuilder();
-            String line = in.readLine();
-            System.out.println("Got to line : " + line);
-            return line;
+            return response;
         } catch (IOException exception) {
             return "Failed to send command: " + exception.getMessage();
         }

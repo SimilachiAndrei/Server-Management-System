@@ -22,18 +22,6 @@ public class WebSocketController {
         return connectionService.getCommandService().sendCommand(command);
     }
 
-//    @MessageMapping("/sendCommand")
-//    @SendTo("/topic/commandResponse")
-//    public String handleCommand(String command) {
-//        // Process the command and return a response
-//        String response = processCommand(command);
-//        return response;
-//    }
-//
-//    private String processCommand(String command) {
-//        // Implement your command processing logic here
-//        return "Processed: " + command;
-//    }
 }
 
 
