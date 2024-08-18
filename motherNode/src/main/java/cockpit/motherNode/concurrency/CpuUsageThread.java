@@ -36,7 +36,7 @@ public class CpuUsageThread implements Runnable {
             System.out.println("After connection : " + success);
             // Continuously receive CPU usage data and forward to the frontend
             DataInputStream inputStream = new DataInputStream(socket.getInputStream());
-            while (true) {
+            while (!socket.isClosed()) {
                 int messageLength = inputStream.readInt();
                 byte[] data = new byte[messageLength];
                 inputStream.read(data);

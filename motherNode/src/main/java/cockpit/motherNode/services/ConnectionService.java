@@ -21,7 +21,7 @@ public class ConnectionService {
     private SimpMessagingTemplate messagingTemplate;
 
     public boolean initiateConnection(String ipAddress, int port) {
-        executorService = Executors.newFixedThreadPool(2);
+        executorService = Executors.newFixedThreadPool(1);
 
         commandService = new CommandService(ipAddress, port);
         commandService.connect();
