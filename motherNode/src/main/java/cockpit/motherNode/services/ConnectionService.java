@@ -1,5 +1,6 @@
 package cockpit.motherNode.services;
 
+import cockpit.motherNode.concurrency.CommandThread;
 import cockpit.motherNode.concurrency.CpuUsageThread;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,32 +15,34 @@ import java.util.concurrent.Executors;
 public class ConnectionService {
 
     private ExecutorService executorService;
-    private CommandService commandService;
+    private CommandThread commandThread;
     private CpuUsageThread cpuUsageThread;
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    public boolean initiateConnection(String ipAddress, int port) {
-        executorService = Executors.newFixedThreadPool(1);
 
-        commandService = new CommandService(ipAddress, port);
-        commandService.connect();
+    public boolean initiateConnection(String ipAddress, int port) {
+        executorService = Executors.newFixedThreadPool(2);
+
+        commandThread = new CommandThread(ipAddress, port, messagingTemplate);
         cpuUsageThread = new CpuUsageThread(ipAddress, port, messagingTemplate);
 
+        executorService.submit(commandThread);
         executorService.submit(cpuUsageThread);
-        System.out.println(commandService.isSuccess() + " " + cpuUsageThread.isSuccess());
+
+        System.out.println(commandThread.isSuccess() + " " + cpuUsageThread.isSuccess());
         try {
-            Thread.sleep(1);
+            Thread.sleep(3);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return commandService.isSuccess() && cpuUsageThread.isSuccess();
+        return commandThread.isSuccess() && cpuUsageThread.isSuccess();
     }
 
     public void disconnect() {
-        if (commandService.getSocket() != null) {
-            commandService.stop();
+        if (commandThread.getSocket() != null) {
+            commandThread.stop();
         }
         if (cpuUsageThread != null) {
             cpuUsageThread.stop();

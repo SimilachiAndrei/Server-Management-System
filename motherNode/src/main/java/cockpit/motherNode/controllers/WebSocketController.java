@@ -1,11 +1,13 @@
 package cockpit.motherNode.controllers;
 
-import cockpit.motherNode.services.CommandService;
 import cockpit.motherNode.services.ConnectionService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
+
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
+import java.util.Map;
 
 @Controller
 public class WebSocketController {
@@ -15,18 +17,24 @@ public class WebSocketController {
     public WebSocketController(ConnectionService connectionService) {
         this.connectionService = connectionService;
     }
+    
 
+    @MessageMapping("/sendInput")
+    public void a(Map<String, String> payload) throws Exception {
+        String input = payload.get("input");
+        System.out.println(input);
 
-    @MessageMapping("/sendCommand")
-    @SendTo("/topic/commandResponse")
-    public String processCommand(String command) {
-        return connectionService.getCommandService().sendCommand(command);
+        Socket childNodeSocket = connectionService.getCommandThread().getSocket();
+        if (childNodeSocket != null && !childNodeSocket.isClosed()) {
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(childNodeSocket.getOutputStream()));
+            writer.write(input);
+            writer.flush();
+        }
     }
 
-    @MessageMapping("/disconnect")
-    public void handleDisconnect(SimpMessageHeaderAccessor headerAccessor) {
+    @MessageMapping("/terminateTerminal")
+    public void terminateTerminal(String sessionId) throws Exception {
         connectionService.disconnect();
-
     }
 }
 
