@@ -1,105 +1,108 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { Terminal } from 'xterm';
+import 'xterm/css/xterm.css';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
-//TO DO : add jwt in case of multiple connections from different clients so i can use a map in the 
-//backend
-
-const DashboardPage = () => {
-    const [cpuData, setCpuData] = useState('');
-    const [command, setCommand] = useState('');
-    const [response, setResponse] = useState('');
-    const clientRef = useRef(null);
+const Cockpit = () => {
+    const terminalRef = useRef(null);
+    const xtermRef = useRef(null);
+    const stompClientRef = useRef(null);
+    const sessionIdRef = useRef(`session-${Math.random().toString(36).substr(2, 9)}`);
+    const inputBuffer = useRef('');  // Buffer for storing input
 
     useEffect(() => {
+        const sessionId = sessionIdRef.current;
+
+        // Initialize the xterm.js terminal
+        const terminal = new Terminal({
+            cursorBlink: true,
+            rows: 24,
+            cols: 80,
+        });
+        terminal.open(terminalRef.current);
+        xtermRef.current = terminal;
+
+        // Setup WebSocket connection with SockJS and STOMP
         const socket = new SockJS('http://localhost:4000/ws');
         const stompClient = new Client({
             webSocketFactory: () => socket,
-            debug: (str) => {
-                console.log(str);
-            },
+            debug: (str) => console.log(str),
             reconnectDelay: 5000,
             connectHeaders: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
+            onConnect: () => {
+                console.log('WebSocket connected');
+
+                // Subscribe to terminal output topic
+                stompClient.subscribe('/topic/terminalOutput', (message) => {
+                    const output = message.body;
+                    console.log('Terminal Output:\n', output);  // Debugging
+                    terminal.write(output);  // Write received output to the xterm terminal
+                });
+
+                // Subscribe to CPU usage topic
+                // stompClient.subscribe('/topic/cpuUsage', (message) => {
+                //     const cpuUsage = message.body;
+                //     console.log('Computer Data:\n', cpuUsage);  // For debugging
+                //     // If needed, you can display CPU usage in the UI
+                // });
+            },
+            onDisconnect: () => {
+                console.log('WebSocket disconnected');
+            },
+            onStompError: (frame) => {
+                console.error('Broker reported error: ' + frame.headers['message']);
+                console.error('Additional details: ' + frame.body);
+            }
         });
 
-        stompClient.onConnect = () => {
-            console.log('Connected to WebSocket');
-
-            // Subscribe to both topics in a single onConnect callback
-            stompClient.subscribe('/topic/commandResponse', (message) => {
-                setResponse(message.body);
-            });
-
-            stompClient.subscribe('/topic/cpuUsage', (message) => {
-                setCpuData(message.body);
-            });
-        };
-
-        stompClient.onDisconnect = () => {
-            console.log('Disconnected from WebSocket');
-        };
-
         stompClient.activate();
-        clientRef.current = stompClient;
+        stompClientRef.current = stompClient;
 
-        return () => {
-            if (clientRef.current && clientRef.current.connected) {
-                clientRef.current.deactivate();
+        // Handle terminal input
+        terminal.onData(data => {
+            if (data === '\r') {  // Enter key pressed
+                if (stompClientRef.current && stompClientRef.current.connected) {
+                    stompClientRef.current.publish({
+                        destination: '/app/sendInput',
+                        body: JSON.stringify({
+                            sessionId: sessionId,
+                            input: inputBuffer.current
+                        }),
+                    });
+                }
+                inputBuffer.current = '';  // Clear buffer
+            } else if (data === '\u007F') {  // Handle backspace
+                if (inputBuffer.current.length > 0) {
+                    inputBuffer.current = inputBuffer.current.slice(0, -1);
+                    terminal.write('\b \b');  // Erase character on the terminal
+                }
+            } else {
+                inputBuffer.current += data;  // Accumulate input
+                terminal.write(data);  // Echo the input
             }
+        });
+
+        // Cleanup on component unmount
+        return () => {
+            if (stompClientRef.current && stompClientRef.current.connected) {
+                stompClientRef.current.publish({
+                    destination: '/app/terminateTerminal',
+                    body: sessionId
+                });
+            }
+            stompClientRef.current.deactivate();
         };
     }, []);
-
-    useEffect(() => {
-        const disconnectClient = () => {
-            if (clientRef.current && clientRef.current.connected) {
-                clientRef.current.publish({ destination: '/app/disconnect', body: '' });
-                clientRef.current.deactivate();
-            }
-        };
-    
-        // Handle the page unload or navigation away
-        window.addEventListener('beforeunload', disconnectClient);
-    
-        return () => {
-            window.removeEventListener('beforeunload', disconnectClient);
-            disconnectClient();
-        };
-    }, []);
-    
-
-
-    const handleCommandSubmit = () => {
-        if (clientRef.current && clientRef.current.connected) {
-            clientRef.current.publish({ destination: '/app/sendCommand', body: command });
-            setCommand('');
-        }
-    };
 
     return (
         <div>
-            <h1>Cockpit</h1>
-            <div>
-                <h2>CPU & Memory Usage</h2>
-                <pre>{cpuData}</pre>
-            </div>
-            <div>
-                <h2>Send Command</h2>
-                <input
-                    type="text"
-                    value={command}
-                    onChange={(e) => setCommand(e.target.value)}
-                    placeholder="Enter command"
-                />
-                <button onClick={handleCommandSubmit}>Send</button>
-            </div>
-            <div>
-                <h2>Command Response</h2>
-                <pre>{response}</pre>
-            </div>
+            <h1>Remote Terminal Access</h1>
+            <div ref={terminalRef} style={{ height: '400px', width: '800px', border: '1px solid black' }} />
         </div>
     );
 };
 
-export default DashboardPage;
+export default Cockpit;
