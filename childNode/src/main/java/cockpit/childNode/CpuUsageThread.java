@@ -49,7 +49,7 @@ public class CpuUsageThread implements Runnable {
                 outputStream.write(response);
                 outputStream.flush();
 
-                System.out.println(data);
+//                System.out.println(data);
 
                 try {
                     Thread.sleep(1000);

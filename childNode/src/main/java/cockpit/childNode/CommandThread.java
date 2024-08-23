@@ -2,67 +2,56 @@ package cockpit.childNode;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CommandThread implements Runnable {
     private Socket socket;
+    private volatile boolean running = true;
 
     public CommandThread(Socket socket) {
         this.socket = socket;
+        System.out.println("CommandThread created");
     }
+
 
     @Override
     public void run() {
-        try{
-            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
-            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
-            while (true) {
-                // Read the command length
-                int commandLength = inputStream.readInt();
-                if (commandLength <= 0) {
-                    break;  // End of stream or invalid length
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
+
+            String command;
+            while ((command = reader.readLine()) != null) {
+                System.out.println("Command received: " + command);
+                Process process = Runtime.getRuntime().exec(command);
+
+                BufferedReader processReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                BufferedWriter processWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+
+                new Thread(() -> {
+                    try {
+                        String line;
+                        while ((line = processReader.readLine()) != null) {
+                            writer.write(line);
+                            writer.newLine();
+                            writer.flush();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+
+                String inputLine;
+                while ((inputLine = reader.readLine()) != null) {
+                    processWriter.write(inputLine);
+                    processWriter.flush();
                 }
 
-                // Read the command itself
-                byte[] commandBytes = new byte[commandLength];
-                inputStream.readFully(commandBytes);
-                String command = new String(commandBytes);
-
-                // Execute the command and capture output
-                StringBuilder stringBuilder = getStringBuilder(command);
-
-                // Send the output back to the client
-                byte[] outputBytes = stringBuilder.toString().getBytes();
-                outputStream.writeInt(outputBytes.length);
-                System.out.println(stringBuilder.toString());
-                outputStream.write(outputBytes);
+                process.waitFor();  // Wait for the process to finish
             }
-
-        }
-        catch (IOException e) {
-            System.out.println("Error handling command: " + e.getMessage());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } finally {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                System.out.println("Error closing socket: " + e.getMessage());
-            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private static StringBuilder getStringBuilder(String command) throws InterruptedException, IOException {
-        ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c", command);
-        processBuilder.redirectErrorStream(true);
-        Process process = processBuilder.start();
-        BufferedReader processOutput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        StringBuilder stringBuilder = new StringBuilder();
-        while ((line = processOutput.readLine()) != null) {
-            stringBuilder.append(line).append("\n");
-        }
-        int exitCode = process.waitFor();
-        stringBuilder.append("Process has finished with exit code: ").append(exitCode);
-        return stringBuilder;
-    }
 }

@@ -23,12 +23,14 @@ public class ChildNodeApplication {
 
     private void startServer() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("ChildNode server started on port " + port);
             while (running) {
-                // Accept and handle connections based on type
-                System.out.println("Waiting for a connection !");
+                System.out.println("Waiting for a connection...");
                 Socket socket = serverSocket.accept();
                 String incomingAddress = socket.getInetAddress().getHostAddress();
                 int incomingPort = socket.getPort();
+
+                System.out.println("Received connection from " + incomingAddress + ":" + incomingPort);
 
                 if (!validateConnection(incomingAddress)) {
                     System.out.println("Unauthorized connection attempt from " + incomingAddress + ":" + incomingPort);
@@ -36,23 +38,22 @@ public class ChildNodeApplication {
                     continue;
                 }
 
+                System.out.println("Creating " + currentConnectionType + " thread for " + incomingAddress + ":" + incomingPort);
                 Runnable task = ThreadFactory.createTask(currentConnectionType, socket);
                 if (task != null) {
+                    System.out.println("Submitting " + currentConnectionType + " task to thread pool");
                     threadPool.submit(task);
                     currentConnectionType = getNextConnectionType(currentConnectionType);
-                    if (currentConnectionType == ConnectionType.NONE) {
-                        currentConnectionType = ConnectionType.COMMAND;
-                        waitForThreadsToComplete();
-                    }
                 } else {
                     System.out.println("No task created for connection type: " + currentConnectionType);
                     socket.close();
                 }
             }
         } catch (IOException exception) {
-            System.out.println("Caught error: " + exception.getMessage());
+            System.out.println("Server error: " + exception.getMessage());
         } finally {
-            waitForThreadsToComplete();
+            threadPool.shutdownNow();
+            System.out.println("Server shutdown");
         }
     }
 
