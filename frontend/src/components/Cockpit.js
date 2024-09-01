@@ -9,7 +9,7 @@ const Cockpit = () => {
     const xtermRef = useRef(null);
     const stompClientRef = useRef(null);
     const sessionIdRef = useRef(`session-${Math.random().toString(36).substr(2, 9)}`);
-    const inputBuffer = useRef('');  // Buffer for storing input
+    const inputBuffer = useRef(''); 
 
     useEffect(() => {
         const sessionId = sessionIdRef.current;
@@ -19,6 +19,7 @@ const Cockpit = () => {
             cursorBlink: true,
             rows: 24,
             cols: 80,
+            convertEol: true,  // Convert EOL characters to the correct format
         });
         terminal.open(terminalRef.current);
         xtermRef.current = terminal;
@@ -38,16 +39,8 @@ const Cockpit = () => {
                 // Subscribe to terminal output topic
                 stompClient.subscribe('/topic/terminalOutput', (message) => {
                     const output = message.body;
-                    console.log('Terminal Output:\n', output);  // Debugging
                     terminal.write(output);  // Write received output to the xterm terminal
                 });
-
-                // Subscribe to CPU usage topic
-                // stompClient.subscribe('/topic/cpuUsage', (message) => {
-                //     const cpuUsage = message.body;
-                //     console.log('Computer Data:\n', cpuUsage);  // For debugging
-                //     // If needed, you can display CPU usage in the UI
-                // });
             },
             onDisconnect: () => {
                 console.log('WebSocket disconnected');
@@ -69,10 +62,22 @@ const Cockpit = () => {
                         destination: '/app/sendInput',
                         body: JSON.stringify({
                             sessionId: sessionId,
-                            input: inputBuffer.current
+                            input: inputBuffer.current + '\n'
                         }),
                     });
                 }
+                inputBuffer.current = '';  // Clear buffer
+            } else if (data === '\u0003') {  // Handle Ctrl+C
+                if (stompClientRef.current && stompClientRef.current.connected) {
+                    stompClientRef.current.publish({
+                        destination: '/app/sendInput',
+                        body: JSON.stringify({
+                            sessionId: sessionId,
+                            input: '\u0003'
+                        }),
+                    });
+                }
+                terminal.write('^C\n');
                 inputBuffer.current = '';  // Clear buffer
             } else if (data === '\u007F') {  // Handle backspace
                 if (inputBuffer.current.length > 0) {
