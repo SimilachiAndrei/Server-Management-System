@@ -26,7 +26,7 @@ public class CommandThread implements Runnable {
                     System.out.println("Input stream closed, terminating CommandThread.");
                     break;
                 } else if (command.trim().isEmpty()) {
-                    System.out.println("Received empty command, ignoring.");
+                    System.out.println("Received empty command, ignoring. " + command);
                     continue;
                 }
 
@@ -88,7 +88,6 @@ public class CommandThread implements Runnable {
                 errorThread.join();
                 inputThread.join();
 
-                writer.write("\nCommand execution finished.\n");
                 writer.flush();
             }
 
