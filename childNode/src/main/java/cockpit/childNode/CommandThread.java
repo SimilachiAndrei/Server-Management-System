@@ -2,14 +2,17 @@ package cockpit.childNode;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.*;
 
 public class CommandThread implements Runnable {
     private Socket socket;
     private volatile boolean running = true;
-    private Process process;
+    private Process currentProcess;
+    private ExecutorService executor;
 
     public CommandThread(Socket socket) {
         this.socket = socket;
+        this.executor = Executors.newCachedThreadPool();
         System.out.println("CommandThread created");
     }
 
@@ -18,90 +21,83 @@ public class CommandThread implements Runnable {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
 
-            String command;
             while (running) {
-                command = reader.readLine();
+                String command = reader.readLine();
 
                 if (command == null) {
                     System.out.println("Input stream closed, terminating CommandThread.");
                     break;
                 } else if (command.trim().isEmpty()) {
-                    System.out.println("Received empty command, ignoring. " + command);
+                    System.out.println("Received empty command, ignoring.");
                     continue;
                 }
 
                 System.out.println("Command received: " + command);
 
-                process = Runtime.getRuntime().exec(command);
+                // Terminate the previous process if it's still running
+                if (currentProcess != null && currentProcess.isAlive()) {
+                    currentProcess.destroy();
+                    currentProcess.waitFor();
+                }
 
-                // Handle the output of the process in a separate thread
-                Thread outputThread = new Thread(() -> {
-                    try (BufferedReader processReader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                        String line;
-                        while ((line = processReader.readLine()) != null) {
-                            writer.write(line);
-                            writer.newLine();
-                            writer.flush();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
+                currentProcess = Runtime.getRuntime().exec(command);
 
-                // Handle process error stream in a separate thread
-                Thread errorThread = new Thread(() -> {
-                    try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                        String errorLine;
-                        while ((errorLine = errorReader.readLine()) != null) {
-                            writer.write(errorLine);
-                            writer.newLine();
-                            writer.flush();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
+                Future<?> outputFuture = executor.submit(() -> handleStream(currentProcess.getInputStream(), writer));
+                Future<?> errorFuture = executor.submit(() -> handleStream(currentProcess.getErrorStream(), writer));
 
-                // Handle input to the process in a separate thread
-                Thread inputThread = new Thread(() -> {
-                    try (BufferedWriter processWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
-                        String input;
-                        while (running && (input = reader.readLine()) != null) {
+                // Handle input in the main thread
+                try (BufferedWriter processWriter = new BufferedWriter(new OutputStreamWriter(currentProcess.getOutputStream()))) {
+                    String input;
+                    while (currentProcess.isAlive()) {
+                        if (reader.ready()) {
+                            input = reader.readLine();
+                            if ("EXIT_COMMAND".equals(input)) {
+                                break;
+                            }
                             processWriter.write(input);
                             processWriter.newLine();
                             processWriter.flush();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        Thread.sleep(100);  // Small delay to prevent busy waiting
                     }
-                });
-
-                // Start the threads
-                outputThread.start();
-                errorThread.start();
-                inputThread.start();
+                }
 
                 // Wait for the process to finish
-                process.waitFor();
+                currentProcess.waitFor();
 
-                outputThread.join();
-                errorThread.join();
-                inputThread.join();
+                // Wait for output and error streams to be fully processed
+                outputFuture.get();
+                errorFuture.get();
 
+                writer.write("Command completed.\n");
                 writer.flush();
             }
 
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException | InterruptedException | ExecutionException e) {
             e.printStackTrace();
         } finally {
             cleanup();
         }
     }
 
-    private void cleanup() {
-        if (process != null && process.isAlive()) {
-            process.destroy();
+    private void handleStream(InputStream inputStream, BufferedWriter writer) {
+        try (BufferedReader streamReader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = streamReader.readLine()) != null) {
+                writer.write(line);
+                writer.newLine();
+                writer.flush();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
+
+    private void cleanup() {
+        if (currentProcess != null && currentProcess.isAlive()) {
+            currentProcess.destroy();
+        }
+        executor.shutdownNow();
         try {
             if (socket != null && !socket.isClosed()) {
                 socket.close();
