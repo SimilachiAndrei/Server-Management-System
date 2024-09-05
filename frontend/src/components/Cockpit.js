@@ -9,7 +9,7 @@ const Cockpit = () => {
     const xtermRef = useRef(null);
     const stompClientRef = useRef(null);
     const sessionIdRef = useRef(`session-${Math.random().toString(36).substr(2, 9)}`);
-    const inputBuffer = useRef(''); 
+    const inputBuffer = useRef('');
 
     useEffect(() => {
         const sessionId = sessionIdRef.current;
@@ -19,7 +19,7 @@ const Cockpit = () => {
             cursorBlink: true,
             rows: 24,
             cols: 80,
-            convertEol: true,  // Convert EOL characters to the correct format
+            convertEol: true,
         });
         terminal.open(terminalRef.current);
         xtermRef.current = terminal;
@@ -39,7 +39,7 @@ const Cockpit = () => {
                 // Subscribe to terminal output topic
                 stompClient.subscribe('/topic/terminalOutput', (message) => {
                     const output = message.body;
-                    terminal.write(output);  // Write received output to the xterm terminal
+                    terminal.write(output);
                 });
             },
             onDisconnect: () => {
@@ -66,6 +66,7 @@ const Cockpit = () => {
                         }),
                     });
                 }
+                terminal.write('\r\n');  // Move to the next line
                 inputBuffer.current = '';  // Clear buffer
             } else if (data === '\u0003') {  // Handle Ctrl+C
                 if (stompClientRef.current && stompClientRef.current.connected) {
@@ -77,7 +78,7 @@ const Cockpit = () => {
                         }),
                     });
                 }
-                terminal.write('^C\n');
+                terminal.write('^C\r\n');
                 inputBuffer.current = '';  // Clear buffer
             } else if (data === '\u007F') {  // Handle backspace
                 if (inputBuffer.current.length > 0) {
@@ -85,13 +86,16 @@ const Cockpit = () => {
                     terminal.write('\b \b');  // Erase character on the terminal
                 }
             } else {
-                inputBuffer.current += data;  // Accumulate input
-                terminal.write(data);  // Echo the input
+                inputBuffer.current += data;
+                terminal.write(data);
             }
         });
 
         // Cleanup on component unmount
         return () => {
+            if (xtermRef.current) {
+                xtermRef.current.dispose();  // Dispose of the terminal
+            }
             if (stompClientRef.current && stompClientRef.current.connected) {
                 stompClientRef.current.publish({
                     destination: '/app/terminateTerminal',
@@ -100,6 +104,7 @@ const Cockpit = () => {
             }
             stompClientRef.current.deactivate();
         };
+        
     }, []);
 
     return (
