@@ -1,21 +1,23 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import 'xterm/css/xterm.css';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
 const Cockpit = () => {
-    const terminalRef = useRef(null);
-    const sessionId = `session-${Math.random().toString(36).substr(2, 9)}`;
-    const inputBuffer = useRef('');
-    const stompClientRef = useRef(null);
+    const terminalRef = useRef(null);  
+    const inputBuffer = useRef('');    
+    const stompClientRef = useRef(null);  
+    const [stats, setStats] = useState('');
 
     useEffect(() => {
+        // Prevent terminal duplication by checking if it's already initialized
         if (terminalRef.current.children.length > 0) {
             console.log("Terminal already initialized");
             return;
         }
 
+        // Initialize xterm.js terminal
         const terminal = new Terminal({
             cursorBlink: true,
             rows: 24,
@@ -24,6 +26,7 @@ const Cockpit = () => {
         });
         terminal.open(terminalRef.current);
 
+        // Setup WebSocket connection with SockJS and STOMP
         const socket = new SockJS('http://localhost:4000/ws');
         const stompClient = new Client({
             webSocketFactory: () => socket,
@@ -39,6 +42,13 @@ const Cockpit = () => {
                 stompClient.subscribe('/topic/terminalOutput', (message) => {
                     const output = message.body;
                     terminal.write(output);
+                });
+
+                // Subscribe to CPU usage stats topic
+                stompClient.subscribe('/topic/cpuUsage', (message) => {
+                    const output = message.body;
+                    setStats(output);
+
                 });
             },
             onDisconnect: () => {
@@ -60,7 +70,7 @@ const Cockpit = () => {
                     stompClientRef.current.publish({
                         destination: '/app/sendInput',
                         body: JSON.stringify({
-                            sessionId: sessionId,
+                            jwt: localStorage.getItem('token'),
                             input: inputBuffer.current + '\n'
                         }),
                     });
@@ -72,7 +82,7 @@ const Cockpit = () => {
                     stompClientRef.current.publish({
                         destination: '/app/sendInput',
                         body: JSON.stringify({
-                            sessionId: sessionId,
+                            jwt: localStorage.getItem('token'),
                             input: '\u0003'
                         }),
                     });
@@ -90,11 +100,12 @@ const Cockpit = () => {
             }
         });
 
+        // Cleanup on component unmount
         return () => {
             if (stompClient.connected) {
                 stompClient.publish({
                     destination: '/app/terminateTerminal',
-                    body: sessionId
+                    body: localStorage.getItem('token')
                 });
                 stompClient.deactivate();
             }
@@ -103,6 +114,8 @@ const Cockpit = () => {
 
     return (
         <div>
+            <h2>System Stats:</h2>
+            <pre>{stats}</pre>
             <h1>Remote Terminal Access</h1>
             <div ref={terminalRef} style={{ height: '400px', width: '800px', border: '1px solid black' }} />
         </div>
