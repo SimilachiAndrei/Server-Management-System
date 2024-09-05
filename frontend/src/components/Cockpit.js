@@ -6,15 +6,16 @@ import SockJS from 'sockjs-client';
 
 const Cockpit = () => {
     const terminalRef = useRef(null);
-    const xtermRef = useRef(null);
-    const stompClientRef = useRef(null);
-    const sessionIdRef = useRef(`session-${Math.random().toString(36).substr(2, 9)}`);
+    const sessionId = `session-${Math.random().toString(36).substr(2, 9)}`;
     const inputBuffer = useRef('');
+    const stompClientRef = useRef(null);
 
     useEffect(() => {
-        const sessionId = sessionIdRef.current;
+        if (terminalRef.current.children.length > 0) {
+            console.log("Terminal already initialized");
+            return;
+        }
 
-        // Initialize the xterm.js terminal
         const terminal = new Terminal({
             cursorBlink: true,
             rows: 24,
@@ -22,9 +23,7 @@ const Cockpit = () => {
             convertEol: true,
         });
         terminal.open(terminalRef.current);
-        xtermRef.current = terminal;
 
-        // Setup WebSocket connection with SockJS and STOMP
         const socket = new SockJS('http://localhost:4000/ws');
         const stompClient = new Client({
             webSocketFactory: () => socket,
@@ -91,20 +90,15 @@ const Cockpit = () => {
             }
         });
 
-        // Cleanup on component unmount
         return () => {
-            if (xtermRef.current) {
-                xtermRef.current.dispose();  // Dispose of the terminal
-            }
-            if (stompClientRef.current && stompClientRef.current.connected) {
-                stompClientRef.current.publish({
+            if (stompClient.connected) {
+                stompClient.publish({
                     destination: '/app/terminateTerminal',
                     body: sessionId
                 });
+                stompClient.deactivate();
             }
-            stompClientRef.current.deactivate();
         };
-        
     }, []);
 
     return (
