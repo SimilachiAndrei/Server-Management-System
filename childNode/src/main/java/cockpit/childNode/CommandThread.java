@@ -1,13 +1,17 @@
 package cockpit.childNode;
 
+import com.pty4j.PtyProcess;
+import com.pty4j.PtyProcessBuilder;
+
 import java.io.*;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
 
 public class CommandThread implements Runnable {
     private Socket socket;
     private volatile boolean running = true;
-    private Process currentProcess;
     private ExecutorService executor;
 
     public CommandThread(Socket socket) {
@@ -19,98 +23,57 @@ public class CommandThread implements Runnable {
     @Override
     public void run() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
-
+             BufferedOutputStream outputStream = new BufferedOutputStream(socket.getOutputStream())) {
+            String command;
             while (running) {
-                String command = reader.readLine();
+                command = reader.readLine();
+                System.out.println("Command received : " + command);
 
-                if (command == null) {
-                    System.out.println("Input stream closed, terminating CommandThread.");
-                    break;
-                } else if (command.trim().isEmpty()) {
-                    System.out.println("Received empty command, ignoring.");
-                    continue;
-                }
+                if (command.isEmpty()) break;
 
-                System.out.println("Command received: " + command);
+                Map<String, String> environment = new HashMap<>(System.getenv());
+                String[] commandArray = new String[]{"bash", "-c", command};
 
-                // Terminate the previous process if it's still running
-                if (currentProcess != null && currentProcess.isAlive()) {
-                    currentProcess.destroy();
-                    currentProcess.waitFor();
-                }
+                PtyProcessBuilder processBuilder = new PtyProcessBuilder(commandArray);
+                processBuilder.setEnvironment(environment);
 
-                currentProcess = Runtime.getRuntime().exec(command);
+                PtyProcess process = processBuilder.start();
 
-                Future<?> outputFuture = executor.submit(() -> handleStream(currentProcess.getInputStream(), writer));
-                Future<?> errorFuture = executor.submit(() -> handleStream(currentProcess.getErrorStream(), writer));
+                Future<?> outputThread = executor.submit(() -> handleInputStream(outputStream, process.getInputStream()));
+                Future<?> errorThread = executor.submit(() -> handleInputStream(outputStream, process.getErrorStream()));
 
-                // Handle input in the main thread
-                try (BufferedWriter processWriter = new BufferedWriter(new OutputStreamWriter(currentProcess.getOutputStream()))) {
-                    String input;
-                    while (currentProcess.isAlive()) {
-                        if (reader.ready()) {
-                            input = reader.readLine();
-                            if ("EXIT_COMMAND".equals(input)) {
-                                break;
-                            }
-                            processWriter.write(input);
-                            processWriter.newLine();
-                            processWriter.flush();
-                        }
-                        Thread.sleep(100);  // Small delay to prevent busy waiting
+                PrintWriter processWriter = new PrintWriter(process.getOutputStream(), true);
+                String line;
+                while (process.isAlive()) {
+                    if (reader.ready() && (line = reader.readLine()) != null)
+                    {
+                        processWriter.println(line);
+                        processWriter.flush();
                     }
                 }
 
-                // Wait for the process to finish
-                currentProcess.waitFor();
-
-                // Wait for output and error streams to be fully processed
-                outputFuture.get();
-                errorFuture.get();
-
-                writer.write("Command completed.\n");
-                writer.flush();
+                outputThread.get();
+                errorThread.get();
+                process.waitFor();
             }
-
-        } catch (IOException | InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        } finally {
-            cleanup();
+        } catch (IOException | InterruptedException | ExecutionException exception) {
+            exception.printStackTrace();
         }
     }
 
-    private void handleStream(InputStream inputStream, BufferedWriter writer) {
-        try (BufferedReader streamReader = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-            while ((line = streamReader.readLine()) != null) {
-                writer.write(line);
-                writer.newLine();
-                writer.flush();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void cleanup() {
-        if (currentProcess != null && currentProcess.isAlive()) {
-            currentProcess.destroy();
-        }
-        executor.shutdownNow();
+    private static void handleInputStream(BufferedOutputStream writer, InputStream inputStream) {
         try {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-                System.out.println("Socket closed");
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = bufferedInputStream.read(buffer)) != -1) {
+                writer.write(buffer, 0, bytesRead);
+                writer.flush();
+                System.out.println("Wrote to socket : " + (new String(buffer)));
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException exception) {
+            exception.printStackTrace();
         }
-        System.out.println("CommandThread terminated");
     }
 
-    public void stop() {
-        running = false;
-        cleanup();
-    }
 }
