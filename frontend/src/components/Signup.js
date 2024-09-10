@@ -73,7 +73,10 @@ function Signup() {
                                 required
                             />
                         </div>
-                        <button type='submit'>Signup</button>
+                        <div className={pageStyle.buttonGroup}>
+                            <button type='submit'>Sign Up</button>
+                            <a href='/'>Login</a>
+                        </div>
                     </form>
                 </div>
             </div>

@@ -17,11 +17,11 @@ function Login() {
             });
 
             if (response.ok) {
-                const { token, expiresIn } = await response.json(); 
+                const { token, expiresIn } = await response.json();
                 const expirationTime = Date.now() + expiresIn;
                 localStorage.setItem('token', token);
                 localStorage.setItem('expiresIn', expirationTime);
-                
+
                 // Wait for the state to be updated before navigating
                 await new Promise(resolve => setTimeout(resolve, 0));
                 window.location.href = '/dashboard';
@@ -62,7 +62,10 @@ function Login() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required></input>
                         </div>
-                        <button type='submit'>Login</button>
+                        <div className={pageStyle.buttonGroup}>
+                            <button type='submit'>Login</button>
+                            <a href='/signup'>Sign Up</a>
+                        </div>
                     </form>
                 </div>
             </div>

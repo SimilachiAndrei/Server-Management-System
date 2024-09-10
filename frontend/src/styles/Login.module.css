@@ -22,3 +22,8 @@
     padding: 3rem;
     box-shadow: 1rem 1rem 0.6rem lightgray;
 }
+
+.buttonGroup {
+    display: flex;
+    justify-content: space-between;
+}

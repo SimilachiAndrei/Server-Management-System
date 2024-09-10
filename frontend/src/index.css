@@ -20,13 +20,27 @@ code {
   --var5: #2D4150;
 }
 
+a {
+  font-family: Arial;
+  font-size: 13.3333px;
+  text-decoration: none;
+  color: inherit;     
+}
+
+a:hover {
+  border-radius: 1em;
+  background-color: var(--var3);
+  transition: 1s;
+}
+
+
 button {
   border-radius: 1em;
   background-color: white;
   border: none;
 }
 
-button:hover{
+button:hover {
   background-color: var(--var3);
   transition: 1s;
 }
