@@ -10,58 +10,57 @@ const Cockpit = () => {
     const stompClientRef = useRef(null);  
     const [stats, setStats] = useState('');
 
-    useEffect(() => {
-        // Prevent terminal duplication by checking if it's already initialized
-        if (terminalRef.current.children.length > 0) {
-            console.log("Terminal already initialized");
-            return;
+useEffect(() => {
+    // Prevent terminal duplication by checking if it's already initialized
+    if (terminalRef.current.children.length > 0) {
+        console.log("Terminal already initialized");
+        return;
+    }
+
+    // Initialize xterm.js terminal
+    const terminal = new Terminal({
+        cursorBlink: true,
+        rows: 24,
+        cols: 80,
+        convertEol: true,
+    });
+    terminal.open(terminalRef.current);
+
+    // Setup WebSocket connection with SockJS and STOMP
+    const socket = new SockJS('http://localhost:4000/ws');
+    const stompClient = new Client({
+        webSocketFactory: () => socket,
+        debug: (str) => console.log(str),
+        reconnectDelay: 5000,
+        connectHeaders: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        onConnect: () => {
+            console.log('WebSocket connected');
+
+            // Subscribe to terminal output topic
+            stompClient.subscribe('/topic/terminalOutput', (message) => {
+                const output = message.body;
+                terminal.write(output);
+            });
+
+            // Subscribe to CPU usage stats topic
+            stompClient.subscribe('/topic/cpuUsage', (message) => {
+                const output = message.body;
+                setStats(output);
+            });
+        },
+        onDisconnect: () => {
+            console.log('WebSocket disconnected');
+        },
+        onStompError: (frame) => {
+            console.error('Broker reported error: ' + frame.headers['message']);
+            console.error('Additional details: ' + frame.body);
         }
+    });
 
-        // Initialize xterm.js terminal
-        const terminal = new Terminal({
-            cursorBlink: true,
-            rows: 24,
-            cols: 80,
-            convertEol: true,
-        });
-        terminal.open(terminalRef.current);
-
-        // Setup WebSocket connection with SockJS and STOMP
-        const socket = new SockJS('http://localhost:4000/ws');
-        const stompClient = new Client({
-            webSocketFactory: () => socket,
-            debug: (str) => console.log(str),
-            reconnectDelay: 5000,
-            connectHeaders: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`,
-            },
-            onConnect: () => {
-                console.log('WebSocket connected');
-
-                // Subscribe to terminal output topic
-                stompClient.subscribe('/topic/terminalOutput', (message) => {
-                    const output = message.body;
-                    terminal.write(output);
-                });
-
-                // Subscribe to CPU usage stats topic
-                stompClient.subscribe('/topic/cpuUsage', (message) => {
-                    const output = message.body;
-                    setStats(output);
-
-                });
-            },
-            onDisconnect: () => {
-                console.log('WebSocket disconnected');
-            },
-            onStompError: (frame) => {
-                console.error('Broker reported error: ' + frame.headers['message']);
-                console.error('Additional details: ' + frame.body);
-            }
-        });
-
-        stompClient.activate();
-        stompClientRef.current = stompClient;
+    stompClient.activate();
+    stompClientRef.current = stompClient;
 
         // Handle terminal input
         terminal.onData(data => {
@@ -102,12 +101,18 @@ const Cockpit = () => {
 
         // Cleanup on component unmount
         return () => {
-            if (stompClient.connected) {
-                stompClient.publish({
-                    destination: '/app/terminateTerminal',
-                    body: localStorage.getItem('token')
-                });
-                stompClient.deactivate();
+            console.log('Cleanup function called');
+            if (stompClientRef.current) {
+                if (stompClientRef.current.connected) {
+                    stompClientRef.current.publish({
+                        destination: '/app/terminateTerminal',
+                        body: localStorage.getItem('token')
+                    });
+                }
+                stompClientRef.current.deactivate();
+            }
+            if (terminal) {
+                terminal.dispose();
             }
         };
     }, []);
