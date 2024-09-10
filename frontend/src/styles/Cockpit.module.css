@@ -1,0 +1,41 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f4f4f9;
+    padding: 2rem;
+}
+
+.stat-group {
+    font-size: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.stats {
+    font-size: 1rem;
+    margin: 0;
+    padding: 1rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.terminal-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.terminal {
+    background-color: var(--var5);
+    border: 1px solid var(--var4);
+    width: 100%;
+    height: 400px;
+    max-width: 1000px;
+    border-radius: 8px;
+    box-shadow: 10px 10px 10px var(--var3);
+    overflow: hidden;
+}
