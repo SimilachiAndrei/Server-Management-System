@@ -1,13 +1,13 @@
 package cockpit.motherNode.concurrency;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
 
 @Setter
@@ -20,6 +20,7 @@ public class CpuUsageThread implements Runnable {
     private Integer port;
     private boolean success = false;
     private final SimpMessagingTemplate messagingTemplate;
+    ObjectMapper mapper = new ObjectMapper();
 
     public CpuUsageThread(String address, Integer port, SimpMessagingTemplate messagingTemplate) {
         this.address = address;
@@ -41,7 +42,8 @@ public class CpuUsageThread implements Runnable {
                 byte[] data = new byte[messageLength];
                 inputStream.read(data);
                 String response = new String(data);
-                messagingTemplate.convertAndSend("/topic/cpuUsage", response);
+                JsonNode json = mapper.readTree(response);
+                messagingTemplate.convertAndSend("/topic/cpuUsage", json.toString());
             }
         } catch (IOException e) {
             success = false;
