@@ -1,12 +1,12 @@
 package cockpit.childNode;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.lang.management.ManagementFactory;
 import com.sun.management.OperatingSystemMXBean;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class CpuUsageThread implements Runnable {
     private Socket socket;
@@ -35,16 +35,15 @@ public class CpuUsageThread implements Runnable {
                 double ramUsage = (double) usedMemory / totalMemory * 100;
 
                 // Format the data to be sent over the socket
-                String data = String.format(
-                        "CPU Load: %.2f%%,%nRAM Usage: %.2f%%,%nTotal RAM: %s,%nUsed RAM: %s,%nFree RAM: %s%n",
-                        cpuLoad * 100,
-                        ramUsage,
-                        formatMemorySize(totalMemory),
-                        formatMemorySize(usedMemory),
-                        formatMemorySize(freeMemory)
-                );
+                JSONObject json = new JSONObject();
+                json.put("CPU Load",cpuLoad * 100);
+                json.put("RAM usage",ramUsage);
+                json.put("Total RAM", formatMemorySize(totalMemory));
+                json.put("Used RAM",formatMemorySize(usedMemory));
+                json.put("Free RAM", formatMemorySize(freeMemory));
 
-                byte[] response = data.getBytes();
+
+                byte[] response = json.toString().getBytes();
                 outputStream.writeInt(response.length);
                 outputStream.write(response);
                 outputStream.flush();
@@ -59,6 +58,8 @@ public class CpuUsageThread implements Runnable {
             }
         } catch (IOException e) {
             System.out.println("Error handling CPU usage: " + e.getMessage());
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
         } finally {
             try {
                 socket.close();
