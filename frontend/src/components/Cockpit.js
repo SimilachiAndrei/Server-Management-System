@@ -10,7 +10,16 @@ function Cockpit() {
     const terminalInstance = useRef(null);
     const inputBuffer = useRef('');
     const stompClientRef = useRef(null);
-    const [stats, setStats] = useState('');
+    // const [stats, setStats] = useState('');
+
+    const [cpuLoad, setCpuLoad] = useState('');
+    const [ramUsage, setRamUsage] = useState('');
+    const [totalRam, setTotalRam] = useState('');
+    const [usedRam, setUsedRam] = useState('');
+    const [freeRam, setFreeRam] = useState('');
+
+
+
 
     useEffect(() => {
         // Initialize terminal with a delay
@@ -42,13 +51,21 @@ function Cockpit() {
                         // Subscribe to terminal output topic
                         stompClient.subscribe('/topic/terminalOutput', (message) => {
                             const output = message.body;
+
+
                             terminalInstance.current.write(output);
                         });
 
                         // Subscribe to CPU usage stats topic
                         stompClient.subscribe('/topic/cpuUsage', (message) => {
-                            const output = message.body;
-                            setStats(output);
+                            const output = JSON.parse(message.body);
+                            console.log(output);
+                            setCpuLoad(output['CPU Load']);
+                            setRamUsage(output['RAM usage']);
+                            setTotalRam(output['Total RAM']);
+                            setUsedRam(output['Used RAM']);
+                            setFreeRam(output['Free RAM']);
+                            // setStats(output);
                         });
                     },
                     onDisconnect: () => {
@@ -124,7 +141,13 @@ function Cockpit() {
         <div className={pageStyle.page}>
             <div className={pageStyle['stat-group']}>
                 <h2>System Stats:</h2>
-                <pre className={pageStyle.stats}>{stats}</pre>
+                <pre className={pageStyle.stats}>
+                    <div>{cpuLoad}</div>
+                    <div>{ramUsage}</div>
+                    <div>{totalRam}</div>
+                    <div>{usedRam}</div>
+                    <div>{freeRam}</div>
+                </pre>
             </div>
             <div className={pageStyle['terminal-group']}>
                 <h1>Remote Terminal Access</h1>
