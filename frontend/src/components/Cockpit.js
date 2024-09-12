@@ -4,14 +4,16 @@ import { Client } from "@stomp/stompjs";
 import { Terminal } from "xterm";
 import 'xterm/css/xterm.css';
 import pageStyle from '../styles/Cockpit.module.css';
+import { Doughnut } from 'react-chartjs-2';
+import { Box } from '@mui/material';
 
 
 
 function CircularChart({ value, max, label }) {
-    const radius = 50; // Radius of the circle
-    const strokeWidth = 10; // Stroke width for the circle
-    const circumference = 2 * Math.PI * radius; // Circumference of the circle
-    const progress = (value / max) * circumference; // Calculate progress
+    const radius = 50;
+    const strokeWidth = 10;
+    const circumference = 2 * Math.PI * radius;
+    const progress = (value / max) * circumference;
 
     return (
         <div className={pageStyle.section}>
@@ -21,14 +23,14 @@ function CircularChart({ value, max, label }) {
                     cx="60"
                     cy="60"
                     r={radius}
-                    stroke="#e6e6e6"
+                    stroke="#2D4150"
                     strokeWidth={strokeWidth}
                 />
                 <circle
                     cx="60"
                     cy="60"
                     r={radius}
-                    stroke="green"
+                    stroke="#0877A1"
                     strokeWidth={strokeWidth}
                     strokeDasharray={circumference}
                     strokeDashoffset={circumference - progress}
@@ -51,19 +53,31 @@ function CircularChart({ value, max, label }) {
     );
 }
 
+function RamStatistics({ data }) {
+    return (
+        <Box>
+            <Doughnut data={data} />
+        </Box>
+    );
+}
 
 function Cockpit() {
     const terminalRef = useRef(null);
     const terminalInstance = useRef(null);
     const inputBuffer = useRef('');
     const stompClientRef = useRef(null);
-    // const [stats, setStats] = useState('');
 
     const [cpuLoad, setCpuLoad] = useState('');
     const [ramUsage, setRamUsage] = useState('');
-    const [totalRam, setTotalRam] = useState('');
-    const [usedRam, setUsedRam] = useState('');
-    const [freeRam, setFreeRam] = useState('');
+    const [data, setData] = useState({
+        labels: ['Total RAM', 'Used RAM', 'Free RAM'],
+        datasets: [
+            {
+                data: [0, 0, 0],
+                backgroundColor: ['#59253A', '#78244C', '#895061'],
+            },
+        ],
+    });
 
 
 
@@ -106,7 +120,6 @@ function Cockpit() {
                         // Subscribe to CPU usage stats topic
                         stompClient.subscribe('/topic/cpuUsage', (message) => {
                             const output = JSON.parse(message.body);
-                            console.log(output);
 
                             const parseRamString = (ramString) => {
                                 const value = parseFloat(ramString);
@@ -115,13 +128,25 @@ function Cockpit() {
                                 }
                                 return value;
                             };
-                            
+
+                            const totalRamValue = parseRamString(output['Total RAM']);
+                            const usedRamValue = parseRamString(output['Used RAM']);
+                            const freeRamValue = parseRamString(output['Free RAM']);
+
                             setCpuLoad(output['CPU Load'].toFixed(2));
                             setRamUsage(output['RAM usage'].toFixed(2));
-                            setTotalRam(parseRamString(output['Total RAM']));
-                            setUsedRam(parseRamString(output['Used RAM']));
-                            setFreeRam(parseRamString(output['Free RAM']));
-                            // setStats(output);
+
+                            if (totalRamValue && usedRamValue && freeRamValue) {
+                                setData({
+                                    labels: ['Total RAM', 'Used RAM', 'Free RAM'],
+                                    datasets: [
+                                        {
+                                            data: [totalRamValue, usedRamValue, freeRamValue],
+                                            backgroundColor: ['#59253A', '#78244C', '#895061'],
+                                        },
+                                    ],
+                                });
+                            }
                         });
                     },
                     onDisconnect: () => {
@@ -200,8 +225,7 @@ function Cockpit() {
                 <div className={pageStyle.stats}>
                     <CircularChart value={cpuLoad} max={100} label="CPU Load" />
                     <CircularChart value={ramUsage} max={100} label="RAM Usage" />
-                    {/* <CircularChart value={((usedRam / totalRam) * 100).toFixed(2)} max={100} label="Used RAM" />
-                    <CircularChart value={((freeRam / totalRam) * 100).toFixed(2)} max={100} label="Free RAM" /> */}
+                    <RamStatistics data={data}></RamStatistics>
                 </div>
             </div>
             <div className={pageStyle['terminal-group']}>
