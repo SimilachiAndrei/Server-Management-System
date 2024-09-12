@@ -5,6 +5,53 @@ import { Terminal } from "xterm";
 import 'xterm/css/xterm.css';
 import pageStyle from '../styles/Cockpit.module.css';
 
+
+
+function CircularChart({ value, max, label }) {
+    const radius = 50; // Radius of the circle
+    const strokeWidth = 10; // Stroke width for the circle
+    const circumference = 2 * Math.PI * radius; // Circumference of the circle
+    const progress = (value / max) * circumference; // Calculate progress
+
+    return (
+        <div className={pageStyle.section}>
+            <div className={pageStyle.label}>{label}</div>
+            <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
+                <circle
+                    cx="60"
+                    cy="60"
+                    r={radius}
+                    stroke="#e6e6e6"
+                    strokeWidth={strokeWidth}
+                />
+                <circle
+                    cx="60"
+                    cy="60"
+                    r={radius}
+                    stroke="green"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={circumference - progress}
+                    strokeLinecap="round"
+                    transform="rotate(-90 60 60)"
+                />
+
+                <text
+                    x="50%"
+                    y="50%"
+                    dominantBaseline="middle"
+                    textAnchor="middle"
+                    fontSize="20"
+                    fill="#000"
+                >
+                    {value}%
+                </text>
+            </svg>
+        </div>
+    );
+}
+
+
 function Cockpit() {
     const terminalRef = useRef(null);
     const terminalInstance = useRef(null);
@@ -60,11 +107,20 @@ function Cockpit() {
                         stompClient.subscribe('/topic/cpuUsage', (message) => {
                             const output = JSON.parse(message.body);
                             console.log(output);
-                            setCpuLoad(output['CPU Load']);
-                            setRamUsage(output['RAM usage']);
-                            setTotalRam(output['Total RAM']);
-                            setUsedRam(output['Used RAM']);
-                            setFreeRam(output['Free RAM']);
+
+                            const parseRamString = (ramString) => {
+                                const value = parseFloat(ramString);
+                                if (ramString.toLowerCase().includes('gb')) {
+                                    return value * 1024;
+                                }
+                                return value;
+                            };
+                            
+                            setCpuLoad(output['CPU Load'].toFixed(2));
+                            setRamUsage(output['RAM usage'].toFixed(2));
+                            setTotalRam(parseRamString(output['Total RAM']));
+                            setUsedRam(parseRamString(output['Used RAM']));
+                            setFreeRam(parseRamString(output['Free RAM']));
                             // setStats(output);
                         });
                     },
@@ -141,13 +197,12 @@ function Cockpit() {
         <div className={pageStyle.page}>
             <div className={pageStyle['stat-group']}>
                 <h2>System Stats:</h2>
-                <pre className={pageStyle.stats}>
-                    <div>{cpuLoad}</div>
-                    <div>{ramUsage}</div>
-                    <div>{totalRam}</div>
-                    <div>{usedRam}</div>
-                    <div>{freeRam}</div>
-                </pre>
+                <div className={pageStyle.stats}>
+                    <CircularChart value={cpuLoad} max={100} label="CPU Load" />
+                    <CircularChart value={ramUsage} max={100} label="RAM Usage" />
+                    {/* <CircularChart value={((usedRam / totalRam) * 100).toFixed(2)} max={100} label="Used RAM" />
+                    <CircularChart value={((freeRam / totalRam) * 100).toFixed(2)} max={100} label="Free RAM" /> */}
+                </div>
             </div>
             <div className={pageStyle['terminal-group']}>
                 <h1>Remote Terminal Access</h1>
