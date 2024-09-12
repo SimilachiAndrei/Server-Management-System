@@ -6,6 +6,9 @@ import 'xterm/css/xterm.css';
 import pageStyle from '../styles/Cockpit.module.css';
 import { Doughnut } from 'react-chartjs-2';
 import { Box } from '@mui/material';
+import { Chart, ArcElement } from 'chart.js';
+Chart.register(ArcElement);
+
 
 
 
