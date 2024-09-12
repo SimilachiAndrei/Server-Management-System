@@ -24,38 +24,26 @@ public class CommandThread implements Runnable {
     public void run() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              BufferedOutputStream outputStream = new BufferedOutputStream(socket.getOutputStream())) {
+
+            Map<String, String> environment = new HashMap<>(System.getenv());
+            PtyProcess shellProcess = new PtyProcessBuilder(new String[]{"bash", "-i"})
+                    .setEnvironment(environment)
+                    .start();
+
+            Future<?> outputThread = executor.submit(() -> handleInputStream(outputStream, shellProcess.getInputStream()));
+            Future<?> errorThread = executor.submit(() -> handleInputStream(outputStream, shellProcess.getErrorStream()));
+
+            PrintWriter processWriter = new PrintWriter(shellProcess.getOutputStream(), true);
             String command;
-            while (running) {
-                command = reader.readLine();
+            while (running && (command = reader.readLine()) != null) {
                 System.out.println("Command received : " + command);
-
-                if (command.isEmpty()) break;
-
-                Map<String, String> environment = new HashMap<>(System.getenv());
-                String[] commandArray = new String[]{"bash", "-c", command};
-
-                PtyProcessBuilder processBuilder = new PtyProcessBuilder(commandArray);
-                processBuilder.setEnvironment(environment);
-
-                PtyProcess process = processBuilder.start();
-
-                Future<?> outputThread = executor.submit(() -> handleInputStream(outputStream, process.getInputStream()));
-                Future<?> errorThread = executor.submit(() -> handleInputStream(outputStream, process.getErrorStream()));
-
-                PrintWriter processWriter = new PrintWriter(process.getOutputStream(), true);
-                String line;
-                while (process.isAlive()) {
-                    if (reader.ready() && (line = reader.readLine()) != null)
-                    {
-                        processWriter.println(line);
-                        processWriter.flush();
-                    }
-                }
-
-                outputThread.get();
-                errorThread.get();
-                process.waitFor();
+                processWriter.println(command);
+                processWriter.flush();
             }
+
+            shellProcess.destroy();
+            outputThread.get();
+            errorThread.get();
         } catch (IOException | InterruptedException | ExecutionException exception) {
             exception.printStackTrace();
         }
