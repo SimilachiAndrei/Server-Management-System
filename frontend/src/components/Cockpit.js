@@ -9,9 +9,6 @@ import { Box } from '@mui/material';
 import { Chart, ArcElement } from 'chart.js';
 Chart.register(ArcElement);
 
-
-
-
 function CircularChart({ value, max, label }) {
     const radius = 50;
     const strokeWidth = 10;
@@ -67,7 +64,6 @@ function RamStatistics({ data }) {
 function Cockpit() {
     const terminalRef = useRef(null);
     const terminalInstance = useRef(null);
-    const inputBuffer = useRef('');
     const stompClientRef = useRef(null);
 
     const [cpuLoad, setCpuLoad] = useState('');
@@ -82,18 +78,17 @@ function Cockpit() {
         ],
     });
 
-
-
-
     useEffect(() => {
-        // Initialize terminal with a delay
         const timer = setTimeout(() => {
             if (terminalRef.current && !terminalInstance.current) {
                 terminalInstance.current = new Terminal({
                     cursorBlink: true,
                     rows: 24,
                     cols: 80,
-                    convertEol: true,
+                    convertEol: false,
+                    scrollback: 2000,  // Enable scrollback buffer
+                    disableStdin: false,  // Allow input
+                    mouseEvents: true,  // Enable mouse events
                     theme: {
                         background: '#59253A'
                     }
@@ -115,8 +110,6 @@ function Cockpit() {
                         // Subscribe to terminal output topic
                         stompClient.subscribe('/topic/terminalOutput', (message) => {
                             const output = message.body;
-
-
                             terminalInstance.current.write(output);
                         });
 
@@ -166,43 +159,44 @@ function Cockpit() {
 
                 // Handle terminal input
                 terminalInstance.current.onData(data => {
-                    if (data === '\r') {  // Enter key pressed
-                        if (stompClientRef.current && stompClientRef.current.connected) {
-                            stompClientRef.current.publish({
-                                destination: '/app/sendInput',
-                                body: JSON.stringify({
-                                    jwt: localStorage.getItem('token'),
-                                    input: inputBuffer.current + '\n'
-                                }),
-                            });
-                        }
-                        terminalInstance.current.write('\r\n');  // Move to the next line
-                        inputBuffer.current = '';  // Clear buffer
-                    } else if (data === '\u0003') {  // Handle Ctrl+C
-                        if (stompClientRef.current && stompClientRef.current.connected) {
-                            stompClientRef.current.publish({
-                                destination: '/app/sendInput',
-                                body: JSON.stringify({
-                                    jwt: localStorage.getItem('token'),
-                                    input: '\u0003'
-                                }),
-                            });
-                        }
-                        terminalInstance.current.write('^C\r\n');
-                        inputBuffer.current = '';  // Clear buffer
-                    } else if (data === '\u007F') {  // Handle backspace
-                        if (inputBuffer.current.length > 0) {
-                            inputBuffer.current = inputBuffer.current.slice(0, -1);
-                            terminalInstance.current.write('\b \b');  // Erase character on the terminal
-                        }
-                    } else {
-                        inputBuffer.current += data;
-                        terminalInstance.current.write(data);
+                    if (stompClientRef.current && stompClientRef.current.connected) {
+                        stompClientRef.current.publish({
+                            destination: '/app/sendInput',
+                            body: JSON.stringify({
+                                jwt: localStorage.getItem('token'),
+                                input: data  // Send the input immediately
+                            }),
+                        });
+                    }
+                });
+
+                // Enable mouse events for applications like htop
+                terminalInstance.current.attachCustomKeyEventHandler(e => {
+                    if (e.ctrlKey && e.key === 'c') {
+                        return true;  // Let Ctrl+C pass through
+                    }
+                    if (e.type === 'scroll') {
+                        return false;  // Prevent scroll events from becoming input
+                    }
+                    return true;  // Handle other events normally
+                });
+
+                // Handle binary data for mouse events
+                terminalInstance.current.onBinary(event => {
+                    if (stompClientRef.current && stompClientRef.current.connected) {
+                        stompClientRef.current.publish({
+                            destination: '/app/sendInput',
+                            body: JSON.stringify({
+                                jwt: localStorage.getItem('token'),
+                                input: event  // Send the binary input directly
+                            }),
+                        });
                     }
                 });
             }
         }, 100);
 
+        // Cleanup on component unmount
         return () => {
             clearTimeout(timer);
             if (terminalInstance.current) {
@@ -213,7 +207,7 @@ function Cockpit() {
                 if (stompClientRef.current.connected) {
                     stompClientRef.current.publish({
                         destination: '/app/terminateTerminal',
-                        body: localStorage.getItem('token')
+                        body: JSON.stringify({ jwt: localStorage.getItem('token') })
                     });
                 }
                 stompClientRef.current.deactivate();
