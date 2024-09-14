@@ -27,6 +27,8 @@ public class CommandThread implements Runnable {
             Map<String, String> environment = new HashMap<>(System.getenv());
             PtyProcess shellProcess = new PtyProcessBuilder(new String[]{"bash", "-i"})
                     .setEnvironment(environment)
+                    .setInitialRows(24)
+                    .setInitialColumns(80)
                     .start();
 
             Future<?> outputThread = executor.submit(() -> handleInputStream(outputStream, shellProcess.getInputStream()));
