@@ -22,8 +22,7 @@ public class CommandThread implements Runnable {
 
     @Override
     public void run() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             BufferedOutputStream outputStream = new BufferedOutputStream(socket.getOutputStream())) {
+        try (BufferedOutputStream outputStream = new BufferedOutputStream(socket.getOutputStream())) {
 
             Map<String, String> environment = new HashMap<>(System.getenv());
             PtyProcess shellProcess = new PtyProcessBuilder(new String[]{"bash", "-i"})
@@ -33,12 +32,15 @@ public class CommandThread implements Runnable {
             Future<?> outputThread = executor.submit(() -> handleInputStream(outputStream, shellProcess.getInputStream()));
             Future<?> errorThread = executor.submit(() -> handleInputStream(outputStream, shellProcess.getErrorStream()));
 
-            PrintWriter processWriter = new PrintWriter(shellProcess.getOutputStream(), true);
-            String command;
-            while (running && (command = reader.readLine()) != null) {
-                System.out.println("Command received : " + command);
-                processWriter.println(command);
-                processWriter.flush();
+            InputStream socketInputStream = socket.getInputStream();
+            OutputStream processOutputStream = shellProcess.getOutputStream();
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+
+            while (!socket.isClosed() && (bytesRead = socketInputStream.read(buffer)) != -1) {
+                processOutputStream.write(buffer, 0, bytesRead);
+                processOutputStream.flush();
             }
 
             shellProcess.destroy();
@@ -57,11 +59,10 @@ public class CommandThread implements Runnable {
             while ((bytesRead = bufferedInputStream.read(buffer)) != -1) {
                 writer.write(buffer, 0, bytesRead);
                 writer.flush();
-                System.out.println("Wrote to socket : " + (new String(buffer)));
+                System.out.println("Wrote to socket : " + new String(buffer, 0, bytesRead));
             }
         } catch (IOException exception) {
             exception.printStackTrace();
         }
     }
-
 }
