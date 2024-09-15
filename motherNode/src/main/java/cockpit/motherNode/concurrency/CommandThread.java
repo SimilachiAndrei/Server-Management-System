@@ -5,7 +5,6 @@ import lombok.Setter;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -34,7 +33,6 @@ public class CommandThread implements Runnable {
             socket = new Socket(address, port);
             success = true;
             System.out.println("Command thread socket : " + success);
-            messagingTemplate.convertAndSend("/topic/terminalOutput", "TestMessage");
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             char[] buffer = new char[1024];
