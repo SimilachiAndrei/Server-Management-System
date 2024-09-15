@@ -10,9 +10,8 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public class CommandThread implements Runnable {
-    private Socket socket;
-    private volatile boolean running = true;
-    private ExecutorService executor;
+    private final Socket socket;
+    private final ExecutorService executor;
 
     public CommandThread(Socket socket) {
         this.socket = socket;
@@ -45,26 +44,44 @@ public class CommandThread implements Runnable {
                 processOutputStream.flush();
             }
 
+            // Socket closed, clean up
             shellProcess.destroy();
-            outputThread.get();
-            errorThread.get();
-        } catch (IOException | InterruptedException | ExecutionException exception) {
+            outputThread.cancel(true);
+            errorThread.cancel(true);
+            executor.shutdownNow();
+            System.out.println("CommandThread: Socket closed, resources cleaned up.");
+
+        } catch (IOException exception) {
             exception.printStackTrace();
+        } finally {
+            try {
+                if (!executor.isShutdown()) {
+                    executor.shutdownNow();
+                }
+                if (!socket.isClosed()) {
+                    socket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private static void handleInputStream(BufferedOutputStream writer, InputStream inputStream) {
-        try {
-            BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+        try (BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream)) {
             byte[] buffer = new byte[4096];
             int bytesRead;
-            while ((bytesRead = bufferedInputStream.read(buffer)) != -1) {
+            while (!Thread.currentThread().isInterrupted() && (bytesRead = bufferedInputStream.read(buffer)) != -1) {
                 writer.write(buffer, 0, bytesRead);
                 writer.flush();
                 System.out.println("Wrote to socket : " + new String(buffer, 0, bytesRead));
             }
         } catch (IOException exception) {
-            exception.printStackTrace();
+            if (!Thread.currentThread().isInterrupted()) {
+                exception.printStackTrace();
+            } else {
+                System.out.println("Thread interrupted, stopping input stream handling.");
+            }
         }
     }
 }
