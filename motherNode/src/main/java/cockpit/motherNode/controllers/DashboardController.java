@@ -6,7 +6,9 @@ import cockpit.motherNode.entities.Endpoint;
 import cockpit.motherNode.responses.EndpointResponse;
 import cockpit.motherNode.services.ConnectionService;
 import cockpit.motherNode.services.DashboardService;
+import cockpit.motherNode.services.JwtService;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static cockpit.motherNode.utilities.IpAddressUtil.inetAddressToString;
 
@@ -24,14 +27,23 @@ import static cockpit.motherNode.utilities.IpAddressUtil.inetAddressToString;
 @RestController
 public class DashboardController {
     private DashboardService dashboardService;
-    private ConnectionService connectionService;
+    @Autowired
+    private ConcurrentHashMap<String, ConnectionService> connectionManager;
+
+    @Autowired
+    private JwtService jwtService;
 
     @PostMapping("/connect")
-    public ResponseEntity<Map<String, String>> connect(@RequestBody ConnectDto connectDto) {
+    public ResponseEntity<Map<String, String>> connect(@RequestBody ConnectDto connectDto, @RequestHeader("Authorization") String authHeader) {
+        String jwt = authHeader.substring(7);
+
+        ConnectionService connectionService = new ConnectionService();
         boolean success = connectionService.initiateConnection(connectDto.getAddress(), connectDto.getPort());
 
         Map<String, String> response = new HashMap<>();
         if (success) {
+            connectionManager.put(jwt, connectionService);
+
             response.put("message", "Connection established successfully.");
             return ResponseEntity.ok(response);
         } else {
