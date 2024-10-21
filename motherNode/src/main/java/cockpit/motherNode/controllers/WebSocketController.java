@@ -1,5 +1,6 @@
 package cockpit.motherNode.controllers;
 
+import cockpit.motherNode.services.ConnectionManagerService;
 import cockpit.motherNode.services.ConnectionService;
 import cockpit.motherNode.services.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,13 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketController {
 
     @Autowired
-    private ConcurrentHashMap<String, ConnectionService> connectionManager;
-
+    private ConnectionManagerService connectionManager;
     @Autowired
     private JwtService jwtService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @MessageMapping("/sendInput")
     public void sendInput(Map<String, String> payload) throws Exception {
@@ -52,7 +49,7 @@ public class WebSocketController {
     }
 
     private ConnectionService getConnectionServiceByJwt(String jwt) {
-        for (Map.Entry<String, ConnectionService> entry : connectionManager.entrySet()) {
+        for (Map.Entry<String, ConnectionService> entry : connectionManager.getConnections().entrySet()) {
             if (entry.getKey().equals(jwt)) {
                 return entry.getValue();
             }

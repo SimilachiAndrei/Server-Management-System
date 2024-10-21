@@ -1,7 +1,7 @@
 package cockpit.motherNode.configs;
 
 import cockpit.motherNode.repositories.UserRepository;
-import cockpit.motherNode.services.ConnectionService;
+import cockpit.motherNode.services.ConnectionManagerService;
 import cockpit.motherNode.services.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,10 +37,6 @@ public class ApplicationConfiguration {
         return config.getAuthenticationManager();
     }
 
-    @Bean
-    public ConcurrentHashMap<String, ConnectionService> connectionManager() {
-        return new ConcurrentHashMap<>();
-    }
 
     @Bean
     AuthenticationProvider authenticationProvider() {

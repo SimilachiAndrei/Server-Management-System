@@ -18,9 +18,12 @@ public class ConnectionService {
     private CommandThread commandThread;
     private CpuUsageThread cpuUsageThread;
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
 
+    @Autowired
+    public ConnectionService(SimpMessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
+    }
 
     public boolean initiateConnection(String ipAddress, int port) {
         executorService = Executors.newFixedThreadPool(2);
@@ -50,6 +53,4 @@ public class ConnectionService {
         if (executorService != null) {
             executorService.shutdownNow();
         }
-    }
-
-}
+    }}

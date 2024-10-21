@@ -4,12 +4,14 @@ import cockpit.motherNode.dtos.ConnectDto;
 import cockpit.motherNode.dtos.EndpointDto;
 import cockpit.motherNode.entities.Endpoint;
 import cockpit.motherNode.responses.EndpointResponse;
+import cockpit.motherNode.services.ConnectionManagerService;
 import cockpit.motherNode.services.ConnectionService;
 import cockpit.motherNode.services.DashboardService;
 import cockpit.motherNode.services.JwtService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.UnknownHostException;
@@ -28,16 +30,17 @@ import static cockpit.motherNode.utilities.IpAddressUtil.inetAddressToString;
 public class DashboardController {
     private DashboardService dashboardService;
     @Autowired
-    private ConcurrentHashMap<String, ConnectionService> connectionManager;
-
+    private ConnectionManagerService connectionManager;
     @Autowired
     private JwtService jwtService;
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/connect")
     public ResponseEntity<Map<String, String>> connect(@RequestBody ConnectDto connectDto, @RequestHeader("Authorization") String authHeader) {
         String jwt = authHeader.substring(7);
 
-        ConnectionService connectionService = new ConnectionService();
+        ConnectionService connectionService = new ConnectionService(messagingTemplate);
         boolean success = connectionService.initiateConnection(connectDto.getAddress(), connectDto.getPort());
 
         Map<String, String> response = new HashMap<>();
