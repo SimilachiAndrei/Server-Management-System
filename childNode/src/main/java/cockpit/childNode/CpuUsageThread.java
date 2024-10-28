@@ -1,6 +1,7 @@
 package cockpit.childNode;
 
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.lang.management.ManagementFactory;
@@ -34,6 +35,14 @@ public class CpuUsageThread implements Runnable {
                 // Get RAM usage percentage
                 double ramUsage = (double) usedMemory / totalMemory * 100;
 
+                File root = new File("/");
+                long totalDiskSpace = root.getTotalSpace();
+                long freeDiskSpace = root.getFreeSpace();
+                long usedDiskSpace = totalDiskSpace - freeDiskSpace;
+
+                // Calculate Disk usage percentage
+                double diskUsage = (double) usedDiskSpace / totalDiskSpace * 100;
+
                 // Format the data to be sent over the socket
                 JSONObject json = new JSONObject();
                 json.put("CPU Load",cpuLoad * 100);
@@ -41,6 +50,11 @@ public class CpuUsageThread implements Runnable {
                 json.put("Total RAM", formatMemorySize(totalMemory));
                 json.put("Used RAM",formatMemorySize(usedMemory));
                 json.put("Free RAM", formatMemorySize(freeMemory));
+
+                json.put("Disk Usage", diskUsage);
+                json.put("Total Disk Space", formatMemorySize(totalDiskSpace));
+                json.put("Used Disk Space", formatMemorySize(usedDiskSpace));
+                json.put("Free Disk Space", formatMemorySize(freeDiskSpace));
 
 
                 byte[] response = json.toString().getBytes();
