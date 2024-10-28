@@ -9,7 +9,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 
 @NoArgsConstructor
@@ -32,11 +34,16 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Column
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Endpoint> endpoints;
+
     User(String username, String password, String email)
     {
         this.username=username;
         this.password=password;
         this.email = email;
+        endpoints = Collections.emptySet();
     }
 
     @Override

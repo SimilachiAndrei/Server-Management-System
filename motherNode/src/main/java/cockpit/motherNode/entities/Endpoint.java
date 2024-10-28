@@ -18,10 +18,14 @@ public class Endpoint {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
+    @ManyToOne
+    @JoinColumn(name = "USER_ID", nullable = false)
+    private User user;
+
     @Column(nullable = false, unique = true)
     private String name;
 
-    @Column(columnDefinition = "inet", nullable = false, unique = true)
+    @Column(columnDefinition = "inet", nullable = false, unique = false)
     private InetAddress ipV4;
 
     @Column(columnDefinition = "TEXT")

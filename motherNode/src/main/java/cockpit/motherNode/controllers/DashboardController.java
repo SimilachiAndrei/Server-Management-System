@@ -10,6 +10,8 @@ import cockpit.motherNode.services.DashboardService;
 import cockpit.motherNode.services.JwtService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -56,9 +58,16 @@ public class DashboardController {
     }
 
     @GetMapping("/getAll")
-    public ResponseEntity<List<EndpointResponse>> getAll() {
+    public ResponseEntity<List<EndpointResponse>> getAll(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String jwt = authorizationHeader.substring(7);
+        String username = jwtService.extractUsername(jwt);
+
         List<EndpointResponse> endpointResponses = new ArrayList<>();
-        List<Endpoint> endpoints = dashboardService.getAll();
+        List<Endpoint> endpoints = dashboardService.getAll(username);
         endpoints.forEach(endpoint -> {
             EndpointResponse endpointResponse = new EndpointResponse();
             endpointResponse.setDescription(endpoint.getDescription());
@@ -73,8 +82,15 @@ public class DashboardController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<EndpointResponse> add(@RequestBody EndpointDto endpointDto) throws UnknownHostException {
-        Endpoint endpoint = dashboardService.add(endpointDto);
+    public ResponseEntity<EndpointResponse> add(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader, @RequestBody EndpointDto endpointDto) throws UnknownHostException {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // Extract JWT from the Authorization header
+        String jwt = authorizationHeader.substring(7);
+        String username = jwtService.extractUsername(jwt);
+        Endpoint endpoint = dashboardService.add(endpointDto, username);
         EndpointResponse endpointResponse = new EndpointResponse();
         endpointResponse.setAddress(inetAddressToString(endpoint.getIpV4()));
         endpointResponse.setName(endpoint.getName());
