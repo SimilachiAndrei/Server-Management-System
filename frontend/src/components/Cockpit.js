@@ -83,6 +83,27 @@ function Cockpit() {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const pcName = urlParams.get('name');
+
+        const cleanup = () => {
+            if (terminalInstance.current) {
+                terminalInstance.current.dispose();
+                terminalInstance.current = null;
+            }
+            if (stompClientRef.current && stompClientRef.current.connected) {
+                stompClientRef.current.publish({
+                    destination: `/app/terminateTerminal`,
+                    body: JSON.stringify({
+                        jwt: sessionStorage.getItem('token'),
+                        name: pcName
+                    })
+                });
+                stompClientRef.current.deactivate();
+            }
+        };
+    
+        // Add beforeunload listener for refresh
+        window.addEventListener('beforeunload', cleanup);
+
         const timer = setTimeout(() => {
             if (terminalRef.current && !terminalInstance.current) {
                 terminalInstance.current = new Terminal({
@@ -205,22 +226,8 @@ function Cockpit() {
         // Cleanup on component unmount
         return () => {
             clearTimeout(timer);
-            if (terminalInstance.current) {
-                terminalInstance.current.dispose();
-                terminalInstance.current = null;
-            }
-            if (stompClientRef.current) {
-                if (stompClientRef.current.connected) {
-                    stompClientRef.current.publish({
-                        destination: `/app/terminateTerminal`,
-                        body: JSON.stringify({
-                            jwt: sessionStorage.getItem('token'),
-                            name: pcName
-                        })
-                    });
-                }
-                stompClientRef.current.deactivate();
-            }
+            cleanup();
+            window.removeEventListener('beforeunload', cleanup);
         };
     }, []);
 
