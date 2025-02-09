@@ -213,8 +213,10 @@ function Cockpit() {
                 if (stompClientRef.current.connected) {
                     stompClientRef.current.publish({
                         destination: `/app/terminateTerminal`,
-                        name: pcName,
-                        body: JSON.stringify({ jwt: localStorage.getItem('token') })
+                        body: JSON.stringify({
+                            jwt: localStorage.getItem('token'),
+                            name: pcName
+                        })
                     });
                 }
                 stompClientRef.current.deactivate();
