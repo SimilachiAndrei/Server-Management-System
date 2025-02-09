@@ -17,12 +17,14 @@ public class CommandThread implements Runnable {
     private Socket socket;
     private String address;
     private Integer port;
+    private String name;
     private boolean success = false;
     private final SimpMessagingTemplate messagingTemplate;
 
-    public CommandThread(String address, Integer port, SimpMessagingTemplate messagingTemplate) {
+    public CommandThread(String address, Integer port, String name, SimpMessagingTemplate messagingTemplate) {
         this.address = address;
         this.port = port;
+        this.name = name;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -40,7 +42,8 @@ public class CommandThread implements Runnable {
             while ((bytesRead = reader.read(buffer)) != -1) {
                 String output = new String(buffer, 0, bytesRead);
                 System.out.println("Command thread : " + output);  // Debugging: Print to console
-                messagingTemplate.convertAndSend("/topic/terminalOutput", output);
+                final String path = "/topic/terminalOutput/".concat(this.name);
+                messagingTemplate.convertAndSend(name, output);
                 System.out.println("Message should be sent");
             }
         } catch (Exception e) {

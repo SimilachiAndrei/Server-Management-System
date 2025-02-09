@@ -26,6 +26,7 @@ public class WebSocketController {
     public void sendInput(Map<String, String> payload) throws Exception {
         String input = payload.get("input");
         String jwt = payload.get("jwt");
+//        String name = payload.get("name");
 
         System.out.println("Received input: " + input + " for user: " + jwt);
 

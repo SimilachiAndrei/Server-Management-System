@@ -43,7 +43,7 @@ public class DashboardController {
         String jwt = authHeader.substring(7);
 
         ConnectionService connectionService = new ConnectionService(messagingTemplate);
-        boolean success = connectionService.initiateConnection(connectDto.getAddress(), connectDto.getPort());
+        boolean success = connectionService.initiateConnection(connectDto.getAddress(), connectDto.getPort(),connectDto.getName());
 
         Map<String, String> response = new HashMap<>();
         if (success) {

@@ -18,13 +18,15 @@ public class CpuUsageThread implements Runnable {
     private Socket socket;
     private String address;
     private Integer port;
+    private String name;
     private boolean success = false;
     private final SimpMessagingTemplate messagingTemplate;
     ObjectMapper mapper = new ObjectMapper();
 
-    public CpuUsageThread(String address, Integer port, SimpMessagingTemplate messagingTemplate) {
+    public CpuUsageThread(String address, Integer port, String name, SimpMessagingTemplate messagingTemplate) {
         this.address = address;
         this.port = port;
+        this.name = name;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -43,7 +45,8 @@ public class CpuUsageThread implements Runnable {
                 inputStream.read(data);
                 String response = new String(data);
                 JsonNode json = mapper.readTree(response);
-                messagingTemplate.convertAndSend("/topic/cpuUsage", json.toString());
+                final String path = "/topic/cpuUsage/".concat(this.name);
+                messagingTemplate.convertAndSend(path, json.toString());
             }
         } catch (IOException e) {
             success = false;

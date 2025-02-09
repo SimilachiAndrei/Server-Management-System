@@ -8,5 +8,6 @@ import lombok.Setter;
 @Getter
 public class ConnectDto {
     private String address;
+    private String name;
     private Integer port;
 }
