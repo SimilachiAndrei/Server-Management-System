@@ -25,11 +25,11 @@ public class ConnectionService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public boolean initiateConnection(String ipAddress, int port, String name) {
+    public boolean initiateConnection(String ipAddress, int port, String name, String jwt) {
         executorService = Executors.newFixedThreadPool(2);
 
-        commandThread = new CommandThread(ipAddress, port, name, messagingTemplate);
-        cpuUsageThread = new CpuUsageThread(ipAddress, port, name, messagingTemplate);
+        commandThread = new CommandThread(ipAddress, port, name, jwt, messagingTemplate);
+        cpuUsageThread = new CpuUsageThread(ipAddress, port, name, jwt, messagingTemplate);
 
         executorService.submit(commandThread);
         executorService.submit(cpuUsageThread);

@@ -2,23 +2,25 @@ package cockpit.motherNode.services;
 
 import lombok.Getter;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Getter
 public class ConnectionManagerService {
-    private final ConcurrentHashMap<String, ConnectionService> connections = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Map<String,String>, ConnectionService> connections = new ConcurrentHashMap<>();
 
-    public void put(String jwt, ConnectionService connectionService) {
-        connections.put(jwt, connectionService);
+    public void put(Map<String,String> unique, ConnectionService connectionService) {
+        connections.put(unique, connectionService);
     }
 
-    public ConnectionService get(String jwt) {
-        return connections.get(jwt);
+    public ConnectionService get(Map<String,String> unique) {
+        return connections.get(unique);
     }
 
-    public void remove(String jwt) {
-        connections.remove(jwt);
+    public void remove(Map<String,String> unique) {
+        connections.remove(unique);
     }
 
     public int getConnectionCount() {
