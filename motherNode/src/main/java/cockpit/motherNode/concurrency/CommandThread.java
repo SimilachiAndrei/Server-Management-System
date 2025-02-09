@@ -43,7 +43,7 @@ public class CommandThread implements Runnable {
                 String output = new String(buffer, 0, bytesRead);
                 System.out.println("Command thread : " + output);  // Debugging: Print to console
                 final String path = "/topic/terminalOutput/".concat(this.name);
-                messagingTemplate.convertAndSend(name, output);
+                messagingTemplate.convertAndSend(path, output);
                 System.out.println("Message should be sent");
             }
         } catch (Exception e) {
