@@ -79,7 +79,10 @@ function Cockpit() {
         ],
     });
 
+
     useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const pcName = urlParams.get('name');
         const timer = setTimeout(() => {
             if (terminalRef.current && !terminalInstance.current) {
                 terminalInstance.current = new Terminal({
@@ -109,13 +112,13 @@ function Cockpit() {
                         console.log('WebSocket connected');
 
                         // Subscribe to terminal output topic
-                        stompClient.subscribe('/topic/terminalOutput', (message) => {
+                        stompClient.subscribe(`/topic/terminalOutput/${pcName}`, (message) => {
                             const output = message.body;
                             terminalInstance.current.write(output);
                         });
 
                         // Subscribe to CPU usage stats topic
-                        stompClient.subscribe('/topic/cpuUsage', (message) => {
+                        stompClient.subscribe(`/topic/cpuUsage/${pcName}`, (message) => {
                             const output = JSON.parse(message.body);
 
                             const parseRamString = (ramString) => {
@@ -162,9 +165,10 @@ function Cockpit() {
                 terminalInstance.current.onData(data => {
                     if (stompClientRef.current && stompClientRef.current.connected) {
                         stompClientRef.current.publish({
-                            destination: '/app/sendInput',
+                            destination: `/app/sendInput`,
                             body: JSON.stringify({
                                 jwt: localStorage.getItem('token'),
+                                name: pcName,
                                 input: data  // Send the input immediately
                             }),
                         });
@@ -186,9 +190,10 @@ function Cockpit() {
                 terminalInstance.current.onBinary(event => {
                     if (stompClientRef.current && stompClientRef.current.connected) {
                         stompClientRef.current.publish({
-                            destination: '/app/sendInput',
+                            destination: `/app/sendInput`,
                             body: JSON.stringify({
                                 jwt: localStorage.getItem('token'),
+                                name: pcName,
                                 input: event  // Send the binary input directly
                             }),
                         });
@@ -207,7 +212,8 @@ function Cockpit() {
             if (stompClientRef.current) {
                 if (stompClientRef.current.connected) {
                     stompClientRef.current.publish({
-                        destination: '/app/terminateTerminal',
+                        destination: `/app/terminateTerminal`,
+                        name: pcName,
                         body: JSON.stringify({ jwt: localStorage.getItem('token') })
                     });
                 }

@@ -66,7 +66,7 @@ function Dashboard() {
       });
       const data = await response.json();
       if (response.ok) {
-        navigate(`/cockpit?ip=${computer.address}&port=${computer.port}`);
+        navigate(`/cockpit?name=${computer.name}&ip=${computer.address}&port=${computer.port}`);
       } else {
         console.log('Connection failed');
       }
