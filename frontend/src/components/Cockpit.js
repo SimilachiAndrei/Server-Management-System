@@ -112,13 +112,13 @@ function Cockpit() {
                         console.log('WebSocket connected');
 
                         // Subscribe to terminal output topic
-                        stompClient.subscribe(`/topic/terminalOutput/${pcName}`, (message) => {
+                        stompClient.subscribe(`/topic/terminalOutput/${localStorage.getItem('token')}/${pcName}`, (message) => {
                             const output = message.body;
                             terminalInstance.current.write(output);
                         });
 
                         // Subscribe to CPU usage stats topic
-                        stompClient.subscribe(`/topic/cpuUsage/${pcName}`, (message) => {
+                        stompClient.subscribe(`/topic/cpuUsage/${localStorage.getItem('token')}/${pcName}`, (message) => {
                             const output = JSON.parse(message.body);
 
                             const parseRamString = (ramString) => {
