@@ -106,19 +106,19 @@ function Cockpit() {
                     debug: (str) => console.log(str),
                     reconnectDelay: 5000,
                     connectHeaders: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        Authorization: `Bearer ${sessionStorage.getItem('token')}`,
                     },
                     onConnect: () => {
                         console.log('WebSocket connected');
 
                         // Subscribe to terminal output topic
-                        stompClient.subscribe(`/topic/terminalOutput/${localStorage.getItem('token')}/${pcName}`, (message) => {
+                        stompClient.subscribe(`/topic/terminalOutput/${sessionStorage.getItem('token')}/${pcName}`, (message) => {
                             const output = message.body;
                             terminalInstance.current.write(output);
                         });
 
                         // Subscribe to CPU usage stats topic
-                        stompClient.subscribe(`/topic/cpuUsage/${localStorage.getItem('token')}/${pcName}`, (message) => {
+                        stompClient.subscribe(`/topic/cpuUsage/${sessionStorage.getItem('token')}/${pcName}`, (message) => {
                             const output = JSON.parse(message.body);
 
                             const parseRamString = (ramString) => {
@@ -167,7 +167,7 @@ function Cockpit() {
                         stompClientRef.current.publish({
                             destination: `/app/sendInput`,
                             body: JSON.stringify({
-                                jwt: localStorage.getItem('token'),
+                                jwt: sessionStorage.getItem('token'),
                                 name: pcName,
                                 input: data  // Send the input immediately
                             }),
@@ -192,7 +192,7 @@ function Cockpit() {
                         stompClientRef.current.publish({
                             destination: `/app/sendInput`,
                             body: JSON.stringify({
-                                jwt: localStorage.getItem('token'),
+                                jwt: sessionStorage.getItem('token'),
                                 name: pcName,
                                 input: event  // Send the binary input directly
                             }),
@@ -214,7 +214,7 @@ function Cockpit() {
                     stompClientRef.current.publish({
                         destination: `/app/terminateTerminal`,
                         body: JSON.stringify({
-                            jwt: localStorage.getItem('token'),
+                            jwt: sessionStorage.getItem('token'),
                             name: pcName
                         })
                     });

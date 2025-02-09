@@ -18,7 +18,7 @@ function Dashboard() {
       const response = await fetch('http://localhost:4000/api/endpoint/getAll', {
         method: 'GET',
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,
+          "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
           "Content-Type": "application/json"
         }
       });
@@ -40,7 +40,7 @@ function Dashboard() {
       const response = await fetch('http://localhost:4000/api/endpoint/add', {
         method: 'POST',
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,
+          "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ name, description, address, port })
@@ -59,7 +59,7 @@ function Dashboard() {
       const response = await fetch('http://localhost:4000/api/endpoint/connect', {
         method: 'POST',
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,
+          "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify(computer)

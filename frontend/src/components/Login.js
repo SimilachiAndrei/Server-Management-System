@@ -19,8 +19,8 @@ function Login() {
             if (response.ok) {
                 const { token, expiresIn } = await response.json();
                 const expirationTime = Date.now() + expiresIn;
-                localStorage.setItem('token', token);
-                localStorage.setItem('expiresIn', expirationTime);
+                sessionStorage.setItem('token', token);
+                sessionStorage.setItem('expiresIn', expirationTime);
 
                 // Wait for the state to be updated before navigating
                 await new Promise(resolve => setTimeout(resolve, 0));
