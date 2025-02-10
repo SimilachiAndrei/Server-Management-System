@@ -15,6 +15,7 @@ const isTokenValid = () => {
         return currentTime < parseInt(expiresIn, 10);
     }
     localStorage.clear();
+    sessionStorage.clear();
     return false;
 };
 
