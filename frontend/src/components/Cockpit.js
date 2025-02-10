@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { Terminal } from "xterm";
@@ -66,6 +67,8 @@ function Cockpit() {
     const terminalRef = useRef(null);
     const terminalInstance = useRef(null);
     const stompClientRef = useRef(null);
+    const navigate = useNavigate();
+    
 
     const [cpuLoad, setCpuLoad] = useState('');
     const [ramUsage, setRamUsage] = useState('');
@@ -78,6 +81,27 @@ function Cockpit() {
             },
         ],
     });
+    const handleConnect = async (computer) => {
+        try {
+          const response = await fetch('http://localhost:4000/api/endpoint/connect', {
+            method: 'POST',
+            headers: {
+              "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(computer)
+          });
+          const data = await response.json();
+          if (response.ok) {
+            navigate(`/cockpit?name=${computer.name}&ip=${computer.address}&port=${computer.port}`);
+          } else {
+            console.log('Connection failed');
+          }
+          console.log(data);
+        } catch (error) {
+          console.log(error);
+        }
+      };
 
 
     useEffect(() => {
@@ -98,6 +122,17 @@ function Cockpit() {
                     })
                 });
                 stompClientRef.current.deactivate();
+                // setTimeout(() => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const name = urlParams.get('name');
+                    const ip = urlParams.get('ip');
+                    const port = parseInt(urlParams.get('port'));
+                    if(name != null && ip != null && port != null)
+                    {
+                        const computer = {"name":name,"description":"","ip":ip,"port":port}
+                        handleConnect(computer);
+                    }
+                //   }, 1000);
             }
         };
     
@@ -227,7 +262,7 @@ function Cockpit() {
         return () => {
             clearTimeout(timer);
             cleanup();
-            window.removeEventListener('beforeunload', cleanup);
+            window.removeEventListener('beforeunload', cleanup);    
         };
     }, []);
 
