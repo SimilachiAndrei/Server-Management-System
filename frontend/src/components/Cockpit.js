@@ -81,30 +81,30 @@ function Cockpit() {
             },
         ],
     });
-    const handleConnect = async (computer) => {
-        try {
-          const response = await fetch('http://localhost:4000/api/endpoint/connect', {
-            method: 'POST',
-            headers: {
-              "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(computer)
-          });
-          const data = await response.json();
-          if (response.ok) {
-            navigate(`/cockpit?name=${computer.name}&ip=${computer.address}&port=${computer.port}`);
-          } else {
-            console.log('Connection failed');
-          }
-          console.log(data);
-        } catch (error) {
-          console.log(error);
-        }
-      };
 
 
     useEffect(() => {
+        const handleConnect = async (computer) => {
+            try {
+              const response = await fetch('http://localhost:4000/api/endpoint/connect', {
+                method: 'POST',
+                headers: {
+                  "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify(computer)
+              });
+              const data = await response.json();
+              if (response.ok) {
+                navigate(`/cockpit?name=${computer.name}&ip=${computer.address}&port=${computer.port}`);
+              } else {
+                console.log('Connection failed');
+              }
+              console.log(data);
+            } catch (error) {
+              console.log(error);
+            }
+          };
         const urlParams = new URLSearchParams(window.location.search);
         const pcName = urlParams.get('name');
 
@@ -264,7 +264,7 @@ function Cockpit() {
             cleanup();
             window.removeEventListener('beforeunload', cleanup);    
         };
-    }, []);
+    }, [navigate]);
 
     return (
         <div className={pageStyle.page}>
