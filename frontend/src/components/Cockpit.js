@@ -11,7 +11,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-function CircularChart({ value, max, label }) {
+function CircularChart({ value, max, label, pstroke="#0877A1" }) {
     const radius = 50;
     const strokeWidth = 10;
     const circumference = 2 * Math.PI * radius;
@@ -32,7 +32,7 @@ function CircularChart({ value, max, label }) {
                     cx="60"
                     cy="60"
                     r={radius}
-                    stroke="#0877A1"
+                    stroke={pstroke}
                     strokeWidth={strokeWidth}
                     strokeDasharray={circumference}
                     strokeDashoffset={circumference - progress}
@@ -72,6 +72,7 @@ function Cockpit() {
 
     const [cpuLoad, setCpuLoad] = useState('');
     const [ramUsage, setRamUsage] = useState('');
+    const [diskUsage, setDiskUsage] = useState('');
     const [data, setData] = useState({
         labels: ['Total RAM', 'Used RAM', 'Free RAM'],
         datasets: [
@@ -81,6 +82,17 @@ function Cockpit() {
             },
         ],
     });
+    const [diskData, setDiskData] = useState(
+        {
+            labels: ['Total Disk Space', 'Used Disk Space', 'Free Disk Space'],
+            datasets: [
+                {
+                    data: [0, 0, 0],
+                    backgroundColor: ['#59253A', '#78244C', '#895061']
+                }
+            ]
+        }
+    );
 
 
     useEffect(() => {
@@ -189,8 +201,13 @@ function Cockpit() {
                             const usedRamValue = parseRamString(output['Used RAM']);
                             const freeRamValue = parseRamString(output['Free RAM']);
 
+                            const totalDiskValue = parseRamString(output['Total Disk Space']);
+                            const usedDiskValue = parseRamString(output['Used Disk Space']);
+                            const freeDiskValue = parseRamString(output['Free Disk Space']);
+
                             setCpuLoad(output['CPU Load'].toFixed(2));
                             setRamUsage(output['RAM usage'].toFixed(2));
+                            setDiskUsage(output['Disk Usage' ].toFixed(2))
 
                             if (totalRamValue && usedRamValue && freeRamValue) {
                                 setData({
@@ -202,6 +219,19 @@ function Cockpit() {
                                         },
                                     ],
                                 });
+                            }
+
+                            if(totalDiskValue && usedDiskValue && freeDiskValue)
+                            {
+                                setDiskData({
+                                    labels: ['Total Disk Space', 'Used Disk Space', 'Free Disk Space'],
+                                    datasets: [
+                                        {
+                                            data: [totalDiskValue, usedDiskValue, freeDiskValue],
+                                            backgroundColor: ['#088F8F', '#0877A1', '#89CFF0']
+                                        }
+                                    ]
+                                })
                             }
                         });
                     },
@@ -272,8 +302,10 @@ function Cockpit() {
                 <h2>System Stats:</h2>
                 <div className={pageStyle.stats}>
                     <CircularChart value={cpuLoad} max={100} label="CPU Load" />
-                    <CircularChart value={ramUsage} max={100} label="RAM Usage" />
+                    <CircularChart value={ramUsage} max={100} label="RAM Usage" pstroke="#00A36C"/>
+                    <CircularChart value={diskUsage} max={100} label="Disk Usage" pstroke="#5D3FD3" />
                     <RamStatistics data={data}></RamStatistics>
+                    <RamStatistics data={diskData}></RamStatistics>
                 </div>
             </div>
             <div className={pageStyle['terminal-group']}>
