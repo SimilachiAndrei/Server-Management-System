@@ -1,0 +1,68 @@
+package cockpit.motherNode.controllers;
+
+import cockpit.motherNode.services.ConnectionManagerService;
+import cockpit.motherNode.services.ConnectionService;
+import cockpit.motherNode.services.JwtService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import java.io.OutputStream;
+import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Controller
+public class WebSocketController {
+
+    @Autowired
+    private ConnectionManagerService connectionManager;
+    @Autowired
+    private JwtService jwtService;
+
+    @MessageMapping("/sendInput")
+    public void sendInput(Map<String, String> payload) throws Exception {
+        String input = payload.get("input");
+        String jwt = payload.get("jwt");
+        String name = payload.get("name");
+        Map<String, String> unique = new HashMap<>();
+        unique.put(jwt, name);
+        System.out.println("Received input: " + input + " for user: " + jwt);
+
+        ConnectionService connectionService = getConnectionService(unique);
+        if (connectionService != null) {
+            Socket childNodeSocket = connectionService.getCommandThread().getSocket();
+            if (childNodeSocket != null && !childNodeSocket.isClosed()) {
+                OutputStream outputStream = childNodeSocket.getOutputStream();
+                outputStream.write(input.getBytes());
+                outputStream.flush();
+            }
+        }
+    }
+
+    @MessageMapping("/terminateTerminal")
+    public void terminateTerminal(Map<String, String> payload) throws Exception {
+        String jwt = payload.get("jwt");
+        String name = payload.get("name");
+        Map<String, String> unique =  new HashMap<>();
+        unique.put(jwt, name);
+        ConnectionService conn = connectionManager.get(unique);
+        conn.disconnect();
+        connectionManager.remove(unique);
+    }
+
+    private ConnectionService getConnectionService(Map<String, String> unique) {
+        for (Map.Entry<Map<String, String>, ConnectionService> entry : connectionManager.getConnections().entrySet()) {
+            if (entry.getKey().equals(unique)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+}
+
+
+

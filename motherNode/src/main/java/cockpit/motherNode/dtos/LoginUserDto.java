@@ -1,0 +1,15 @@
+package cockpit.motherNode.dtos;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
+public class LoginUserDto {
+    private String identifier;
+
+    private String password;
+
+    // getters and setters here...
+}
+
