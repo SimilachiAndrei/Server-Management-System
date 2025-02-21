@@ -11,7 +11,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-function CircularChart({ value, max, label, pstroke="#0877A1" }) {
+function CircularChart({ value, max, label, pstroke = "#0877A1" }) {
     const radius = 50;
     const strokeWidth = 10;
     const circumference = 2 * Math.PI * radius;
@@ -68,7 +68,7 @@ function Cockpit() {
     const terminalInstance = useRef(null);
     const stompClientRef = useRef(null);
     const navigate = useNavigate();
-    
+
 
     const [cpuLoad, setCpuLoad] = useState('');
     const [ramUsage, setRamUsage] = useState('');
@@ -98,25 +98,25 @@ function Cockpit() {
     useEffect(() => {
         const handleConnect = async (computer) => {
             try {
-              const response = await fetch('http://localhost:4000/api/endpoint/connect', {
-                method: 'POST',
-                headers: {
-                  "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
-                  "Content-Type": "application/json"
-                },
-                body: JSON.stringify(computer)
-              });
-              const data = await response.json();
-              if (response.ok) {
-                navigate(`/cockpit?name=${computer.name}&ip=${computer.address}&port=${computer.port}`);
-              } else {
-                console.log('Connection failed');
-              }
-              console.log(data);
+                const response = await fetch('http://localhost:4000/api/endpoint/connect', {
+                    method: 'POST',
+                    headers: {
+                        "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(computer)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    navigate(`/cockpit?name=${computer.name}&ip=${computer.address}&port=${computer.port}`);
+                } else {
+                    console.log('Connection failed');
+                }
+                console.log(data);
             } catch (error) {
-              console.log(error);
+                console.log(error);
             }
-          };
+        };
         const urlParams = new URLSearchParams(window.location.search);
         const pcName = urlParams.get('name');
 
@@ -135,19 +135,18 @@ function Cockpit() {
                 });
                 stompClientRef.current.deactivate();
                 // setTimeout(() => {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const name = urlParams.get('name');
-                    const ip = urlParams.get('ip');
-                    const port = parseInt(urlParams.get('port'));
-                    if(name != null && ip != null && port != null)
-                    {
-                        const computer = {"name":name,"description":"","ip":ip,"port":port}
-                        handleConnect(computer);
-                    }
+                const urlParams = new URLSearchParams(window.location.search);
+                const name = urlParams.get('name');
+                const ip = urlParams.get('ip');
+                const port = parseInt(urlParams.get('port'));
+                if (name != null && ip != null && port != null) {
+                    const computer = { "name": name, "description": "", "ip": ip, "port": port }
+                    handleConnect(computer);
+                }
                 //   }, 1000);
             }
         };
-    
+
         // Add beforeunload listener for refresh
         window.addEventListener('beforeunload', cleanup);
 
@@ -207,7 +206,7 @@ function Cockpit() {
 
                             setCpuLoad(output['CPU Load'].toFixed(2));
                             setRamUsage(output['RAM usage'].toFixed(2));
-                            setDiskUsage(output['Disk Usage' ].toFixed(2))
+                            setDiskUsage(output['Disk Usage'].toFixed(2))
 
                             if (totalRamValue && usedRamValue && freeRamValue) {
                                 setData({
@@ -221,8 +220,7 @@ function Cockpit() {
                                 });
                             }
 
-                            if(totalDiskValue && usedDiskValue && freeDiskValue)
-                            {
+                            if (totalDiskValue && usedDiskValue && freeDiskValue) {
                                 setDiskData({
                                     labels: ['Total Disk Space', 'Used Disk Space', 'Free Disk Space'],
                                     datasets: [
@@ -238,9 +236,16 @@ function Cockpit() {
                     onDisconnect: () => {
                         console.log('WebSocket disconnected');
                     },
-                    onStompError: (frame) => {
-                        console.error('Broker reported error: ' + frame.headers['message']);
-                        console.error('Additional details: ' + frame.body);
+                    onStompError: () => {
+                        if (stompClient.current && stompClient.current.active) {
+                            stompClient.current.deactivate();
+                        }
+                    },
+                    onWebSocketError: () => {
+                        // Handle WebSocket error here
+                        if (stompClient.current && stompClient.current.active) {
+                            stompClient.current.deactivate();
+                        }
                     }
                 });
 
@@ -292,7 +297,7 @@ function Cockpit() {
         return () => {
             clearTimeout(timer);
             cleanup();
-            window.removeEventListener('beforeunload', cleanup);    
+            window.removeEventListener('beforeunload', cleanup);
         };
     }, [navigate]);
 
@@ -302,7 +307,7 @@ function Cockpit() {
                 <h2>System Stats:</h2>
                 <div className={pageStyle.stats}>
                     <CircularChart value={cpuLoad} max={100} label="CPU Load" />
-                    <CircularChart value={ramUsage} max={100} label="RAM Usage" pstroke="#00A36C"/>
+                    <CircularChart value={ramUsage} max={100} label="RAM Usage" pstroke="#00A36C" />
                     <CircularChart value={diskUsage} max={100} label="Disk Usage" pstroke="#5D3FD3" />
                     <RamStatistics data={data}></RamStatistics>
                     <RamStatistics data={diskData}></RamStatistics>
