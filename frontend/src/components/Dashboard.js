@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import headerStyle from '../styles/header.module.css';
 import footerStyle from '../styles/footer.module.css';
 import pageStyle from '../styles/Dashboard.module.css';
+import API_URL from '../config'
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -12,10 +13,11 @@ function Dashboard() {
   const [port, setPort] = useState('');
   const [computers, setComputers] = useState([]);
 
+
   // Fetch computers from the database
   const fetchComputers = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/endpoint/getAll', {
+      const response = await fetch(`http://${API_URL}/api/endpoint/getAll`, {
         method: 'GET',
         headers: {
           "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
@@ -37,7 +39,7 @@ function Dashboard() {
   const handleAdd = async (event) => {
     event.preventDefault();
     try {
-      const response = await fetch('http://localhost:4000/api/endpoint/add', {
+      const response = await fetch(`http://${API_URL}/api/endpoint/add`, {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
@@ -56,7 +58,7 @@ function Dashboard() {
   // Handle connecting to a computer
   const handleConnect = async (computer) => {
     try {
-      const response = await fetch('http://localhost:4000/api/endpoint/connect', {
+      const response = await fetch(`http://${API_URL}/api/endpoint/connect`, {
         method: 'POST',
         headers: {
           "Authorization": `Bearer ${sessionStorage.getItem('token')}`,

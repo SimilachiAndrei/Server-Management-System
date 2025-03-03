@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import pageStyle from '../styles/Login.module.css';
 import headerStyle from '../styles/header.module.css';
 import footerStyle from '../styles/footer.module.css';
+import API_URL from '../config'
 
 function Login() {
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
 
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
-            const response = await fetch('http://localhost:4000/auth/login', {
+            const response = await fetch(`http://${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ identifier, password })

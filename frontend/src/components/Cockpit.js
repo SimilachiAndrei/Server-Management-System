@@ -8,6 +8,7 @@ import pageStyle from '../styles/Cockpit.module.css';
 import { Doughnut } from 'react-chartjs-2';
 import { Box } from '@mui/material';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import API_URL from "../config";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -98,7 +99,7 @@ function Cockpit() {
     useEffect(() => {
         const handleConnect = async (computer) => {
             try {
-                const response = await fetch('http://localhost:4000/api/endpoint/connect', {
+                const response = await fetch(`http://${API_URL}/api/endpoint/connect`, {
                     method: 'POST',
                     headers: {
                         "Authorization": `Bearer ${sessionStorage.getItem('token')}`,
@@ -167,7 +168,7 @@ function Cockpit() {
 
                 terminalInstance.current.open(terminalRef.current);
 
-                const socket = new SockJS('http://localhost:4000/ws');
+                const socket = new SockJS(`http://${API_URL}/ws`);
                 const stompClient = new Client({
                     webSocketFactory: () => socket,
                     debug: (str) => console.log(str),

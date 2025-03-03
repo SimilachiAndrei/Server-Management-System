@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import pageStyle from '../styles/Login.module.css';
 import headerStyle from '../styles/header.module.css';
 import footerStyle from '../styles/footer.module.css';
+import API_URL from '../config'
+
 
 function Signup() {
     const navigate = useNavigate();
@@ -11,10 +13,11 @@ function Signup() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
 
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
-            const response = await fetch('http://localhost:4000/auth/signup', {
+            const response = await fetch(`http://${API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
